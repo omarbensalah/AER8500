@@ -1,5 +1,5 @@
 Tkinter Input:
-git@github.com:omarbensalah/AER8500.git
+https://www.geeksforgeeks.org/python-tkinter-entry-widget/
 
 Python multiprocessing:
 https://stackoverflow.com/questions/43861164/passing-data-between-separately-running-python-scripts
