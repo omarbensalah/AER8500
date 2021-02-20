@@ -1,0 +1,6 @@
+Tkinter Input:
+git@github.com:omarbensalah/AER8500.git
+
+Python multiprocessing:
+https://stackoverflow.com/questions/43861164/passing-data-between-separately-running-python-scripts
+
