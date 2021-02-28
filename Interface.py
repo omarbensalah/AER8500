@@ -48,10 +48,10 @@ class Interface:
         self.sub_btn.grid(row = 5, column = 1)
 
         self.count = 0
-        self.update_label()
+        self.update()
     
     def readCalculatorData(self):
-        FIFO = 'calculatorToInterfaceA429'
+        FIFO = '/tmp/calculatorToInterfaceA429'
 
         try:
             os.mkfifo(FIFO)
