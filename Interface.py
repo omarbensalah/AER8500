@@ -1,23 +1,26 @@
-
-import tkinter as tk
+import Tkinter as tk
 import time
+import os
+import errno
+
   
 class Interface:
     def __init__(self, master):
-        self.altitude_var = tk.StringVar()
-        self.enginePower_var = tk.StringVar()
-        self.verticalSpeed_var = tk.StringVar()
+        self.altitude_field = tk.StringVar()
+        self.enginePower_field = tk.StringVar()
+        self.verticalSpeed_field = tk.StringVar()
+        self.rtValue = 0
 
         self.altitude_label = tk.Label(root, text = 'Altitude', font=('calibre', 10, 'bold'))
-        self.altitude_entry = tk.Entry(root, textvariable = self.altitude_var, font=('calibre', 10, 'normal'))
+        self.altitude_entry = tk.Entry(root, textvariable = self.altitude_field, font=('calibre', 10, 'normal'))
         self.altitude_rt = tk.Label(root, text = '500', font=('calibre', 10, 'bold'))
         
         self.enginePower_label = tk.Label(root, text = 'Engine Power', font = ('calibre', 10, 'bold'))
-        self.enginePower_entry = tk.Entry(root, textvariable = self.enginePower_var, font = ('calibre', 10, 'normal'))
+        self.enginePower_entry = tk.Entry(root, textvariable = self.enginePower_field, font = ('calibre', 10, 'normal'))
         self.enginePower_rt = tk.Label(root, text = '50%', font = ('calibre', 10, 'bold'))
 
         self.verticalSpeed_label = tk.Label(root, text = 'Vertical Speed', font = ('calibre', 10, 'bold'))
-        self.verticalSpeed_entry = tk.Entry(root, textvariable = self.verticalSpeed_var, font = ('calibre', 10, 'normal'))
+        self.verticalSpeed_entry = tk.Entry(root, textvariable = self.verticalSpeed_field, font = ('calibre', 10, 'normal'))
         self.verticalSpeed_rt = tk.Label(root, text = '2500 fpm', font = ('calibre', 10, 'bold'))
         
         self.sub_btn=tk.Button(root, text = 'Submit', command = self.submit)
@@ -46,26 +49,43 @@ class Interface:
 
         self.count = 0
         self.update_label()
+    
+    def readCalculatorData(self):
+        FIFO = 'calculatorToInterfaceA429'
 
-    def update_label(self):
-        self.altitude_rt.configure(text = '{} ft'.format(self.count))
-        self.altitude_rt.after(500, self.update_label)
-        self.count += 1
+        try:
+            os.mkfifo(FIFO)
+        except OSError as oe: 
+            if oe.errno != errno.EEXIST:
+                raise
+
+        with open(FIFO) as fifo:
+            while True:
+                data = fifo.read()
+                if len(data) == 0:
+                    break
+                self.rtValue = data
+
+    def update(self):
+        self.readCalculatorData()
+        print('Read: "{0}"'.format(self.rtValue))
+        self.altitude_rt.configure(text = '{} ft'.format(self.rtValue))
+        self.altitude_rt.after(500, self.update)
 
     def submit(self):
-        altitude = self.altitude_var.get()
-        enginePower = self.enginePower_var.get()
-        verticalSpeed = self.verticalSpeed_var.get()
+        altitude = self.altitude_field.get()
+        enginePower = self.enginePower_field.get()
+        verticalSpeed = self.verticalSpeed_field.get()
         
         print("The Altitude is : " + altitude)
         print("The Engine Power is : " + enginePower)
         print("The Vertical Speed is : " + verticalSpeed)
         
-        self.altitude_var.set("")
-        self.enginePower_var.set("")
-        self.verticalSpeed_var.set("")        
+        self.altitude_field.set("")
+        self.enginePower_field.set("")
+        self.verticalSpeed_field.set("")        
 
 root = tk.Tk()
-root.geometry("350x200")
+root.geometry("400x200")
 Interface(root)
 root.mainloop()
