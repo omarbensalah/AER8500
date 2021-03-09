@@ -87,5 +87,6 @@ class Interface:
 
 root = tk.Tk()
 root.geometry("400x200")
+root.title("Panneau de controle")
 Interface(root)
 root.mainloop()
