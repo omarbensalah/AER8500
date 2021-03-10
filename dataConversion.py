@@ -18,8 +18,15 @@ angleOfAttack = {
   "resolution": 0.0625
 }
 
+def insert(source_str, insert_str, pos):
+    return ''.join((source_str[:pos], insert_str, source_str[pos:]))
+
 def A429WordToBin(word):
-    return str(bin(int(word, 16)))
+    binStr = str(bin(int(word, 16)))
+    while (len(binStr) < 34):
+        x = len(binStr)
+        binStr = insert(binStr, "0", 2)
+    return binStr
 
 def extractLabel(binString): 
     return int("0b" + binString[-8:][::-1], 2)
@@ -28,7 +35,9 @@ def extractSsm(binString):
     return binString[2:4]    
 
 def decodeAvionicsStatus(binString):
-    return
+    subStr = binString[5:8]
+    print(subStr)
+    return 
 
 def decodeBcdBnr(binString, icd):
     val = -int(binString[5]) * icd["range"]
@@ -84,4 +93,6 @@ def decodeA429(word, source):
             return {}
 
 
-print(decodeA429("0XFF50C1A0", "agr"))
+print(decodeA429("0x0F50C1A0", "cal"))
+
+# use C0, 80 and 40 as first two bytesss
