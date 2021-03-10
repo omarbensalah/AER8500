@@ -31,7 +31,6 @@ def decodeAvionicsStatus(binString):
     return
 
 def decodeBcdBnr(binString, icd):
-    print(binString[5])
     val = -int(binString[5]) * icd["range"]
     step = icd["range"] / 2
     for i in range(5, icd["NBS"]):
@@ -69,7 +68,7 @@ def decodeA429(word, source):
             if ssm == "00":
                 return {"verticalSpeed": decodeBcdBnr(binString, verticalSpeed)}
             elif ssm == "11":
-                return {"verticalSpeed": - decodeBcdBnr(binString, verticalSpeed)}
+                return {"verticalSpeed": -decodeBcdBnr(binString, verticalSpeed)}
             else:
                 return {}
 
@@ -77,9 +76,12 @@ def decodeA429(word, source):
             if ssm == "00":
                 return {"angleOfAttack": decodeBcdBnr(binString, verticalSpeed)}
             elif ssm == "11":
-                return {"angleOfAttack": decodeBcdBnr(binString, verticalSpeed)}
+                return {"angleOfAttack": -decodeBcdBnr(binString, verticalSpeed)}
             else:
                 return {}
+    
+        else:
+            return {}
 
 
-print(decodeA429("0XFE50C180", "agr"))
+print(decodeA429("0XFF50C1A0", "agr"))
