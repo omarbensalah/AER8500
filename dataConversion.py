@@ -1,12 +1,10 @@
 altitude = {
-  "MSB": 28,
   "NBS": 16,
   "unite": "pieds",
   "range": 65536
 }
 
 verticalSpeed = {
-  "MSB": 28,
   "NBS": 14,
   "unite": "metres/minutes",
   "range": 1024,
@@ -14,7 +12,6 @@ verticalSpeed = {
 }
 
 angleOfAttack = {
-  "MSB": 28,
   "NBS": 9,
   "unite": "degres",
   "range": 32,
@@ -30,57 +27,59 @@ def extractLabel(binString):
 def extractSsm(binString):
     return binString[2:4]    
 
-def decodeAltitude(binString):
-    return
-
 def decodeAvionicsStatus(binString):
     return
 
-def decodeVerticalSpeed(binString):
-    return
+def decodeBcdBnr(binString, icd):
+    print(binString[5])
+    val = -int(binString[5]) * icd["range"]
+    step = icd["range"] / 2
+    for i in range(5, icd["NBS"]):
+        val += int(binString[i]) * step
+        step /= 2
 
-def 
-
+    return val
 
 def decodeA429(word, source):
+    if len(word) != 10:
+        return {}
+
     binString = A429WordToBin(word)
     print(binString)
+
     if (binString.count("1") % 2) == 0:
-        return 
+        return "Bad Parity"
     else:    
-        output = {}
         label = extractLabel(binString)
         ssm = extractSsm(binString)
         
         if label == 1:
             if source == "agr": # Altitude BNR
                 if ssm == "11":
-                    decodeAltitude(binString)
+                    return {"altitude": decodeBcdBnr(binString, altitude)}
                 else:
-                    return
-            elif source == "cal": # Avioncs DIS
+                    return "Bad SSM"
+            elif source == "cal": # Avionics DIS
                 if ssm == "00":
-                    decodeAvionicsStatus(binString)
+                    return {"avionicsUnit": decodeAvionicsStatus(binString)}
                 else:
-                    return
+                    return "Bad SSM"
+
         elif label == 2: # Taux de montee BCD
             if ssm == "00":
-                decodeVerticalSpeed(binString)
+                return {"verticalSpeed": decodeBcdBnr(binString, verticalSpeed)}
             elif ssm == "11":
-                decodeVerticalSpeed(binString)
+                return {"verticalSpeed": - decodeBcdBnr(binString, verticalSpeed)}
             else:
-                return
+                return {}
+
         elif label == 3: # Angle d'ataque BCD
             if ssm == "00":
-                decodeAngleOfAttack(binString)
+                return {"angleOfAttack": decodeBcdBnr(binString, verticalSpeed)}
             elif ssm == "11":
-                decodeAngleOfAttack(binString)
+                return {"angleOfAttack": decodeBcdBnr(binString, verticalSpeed)}
             else:
-                return
-                
-    return output
+                return {}
 
 
-
-
-decodeA429("0XA750C143", "agr")
+print(decodeA429("0XFE50C180", "agr"))
