@@ -17,6 +17,16 @@ angleOfAttack = {
   "range": 32,
   "resolution": 0.0625
 }
+preamble="A202011A202011"
+frameDelimiter="AB"
+destAddress="313144313144"
+sourceAddress="515166515166"
+ipV4="BBBB"
+ipAdress="00221313BCD00221313BCD00221313BC7070F0A0"
+udp="CDE0606F0A03636A"
+frameCheck="10101010"
+frameGap="EEEEEEEEEEEEEEEEEEEEEEEE"
+
 
 def insert(source_str, insert_str, pos):
     return ''.join((source_str[:pos], insert_str, source_str[pos:]))
@@ -29,15 +39,22 @@ def A429WordToBin(word):
     return binStr
 
 def extractLabel(binString): 
+    print(binString[-8:][::-1])
     return int("0b" + binString[-8:][::-1], 2)
 
 def extractSsm(binString):
-    return binString[2:4]    
+    print(binString[1:4])
+    return binString[3:5]    
 
 def decodeAvionicsStatus(binString):
-    subStr = binString[5:8]
+    subStr = binString[22:24]
     print(subStr)
-    return 
+    if subStr=="00":
+      return "AU_SOL"
+    elif subStr=="01":
+      return "CHANGEMENT_ALT"
+    elif subStr=="10":
+      return "VOL_CROISIERE"
 
 def decodeBcdBnr(binString, icd):
     val = -int(binString[5]) * icd["range"]
@@ -92,7 +109,11 @@ def decodeA429(word, source):
         else:
             return {}
 
+def encodeA429(word):
+    return hex(int(word,2))
 
-print(decodeA429("0x0F50C1A0", "cal"))
+
+print(decodeA429("0x80000880", "cal"))
+print(encodeA429("10000000000000000000100010000000"))
 
 # use C0, 80 and 40 as first two bytesss
