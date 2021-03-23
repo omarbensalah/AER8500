@@ -2,6 +2,7 @@ import Tkinter as tk
 import time
 import os
 import errno
+import threading
 
   
 class Interface:
@@ -9,6 +10,8 @@ class Interface:
         self.altitude_field = tk.StringVar()
         self.enginePower_field = tk.StringVar()
         self.verticalSpeed_field = tk.StringVar()
+        
+        self.error_field = tk.StringVar()
         self.rtValue = 0
 
         self.altitude_label = tk.Label(root, text = 'Altitude', font=('calibre', 10, 'bold'))
@@ -29,6 +32,8 @@ class Interface:
         self.wantedValue_label = tk.Label(root, text = 'Wanted Value', font = ('calibre', 10, 'bold'))
         self.actualValue_label = tk.Label(root, text = 'Actual Value', font = ('calibre', 10, 'bold'))
 
+        self.error_label = tk.Label(root, textvariable = self.error_field, font = ('calibre', 10, 'bold'), fg = "red")
+
         self.metric_label.grid(row = 0, column = 0)
         self.wantedValue_label.grid(row = 0, column = 1)
         self.actualValue_label.grid(row = 0, column = 2)
@@ -46,6 +51,8 @@ class Interface:
         self.verticalSpeed_rt.grid(row = 3, column = 2)
 
         self.sub_btn.grid(row = 5, column = 1)
+
+        self.error_label.grid(row = 6, column = 1)
 
         self.count = 0
         self.update()
@@ -68,7 +75,6 @@ class Interface:
 
     def update(self):
         self.readCalculatorData()
-        print('Read: "{0}"'.format(self.rtValue))
         self.altitude_rt.configure(text = '{} ft'.format(self.rtValue))
         self.altitude_rt.after(500, self.update)
 
@@ -76,14 +82,30 @@ class Interface:
         altitude = self.altitude_field.get()
         enginePower = self.enginePower_field.get()
         verticalSpeed = self.verticalSpeed_field.get()
+
+        if (len(altitude) == 0 or len(enginePower) == 0 or len(verticalSpeed) == 0):
+            self.error_field.set("Please fill all fields")
+            return
         
-        print("The Altitude is : " + altitude)
-        print("The Engine Power is : " + enginePower)
-        print("The Vertical Speed is : " + verticalSpeed)
+        altitude_num = int(altitude)
+        enginePower_num = int(enginePower)
+        verticalSpeed_num = int(verticalSpeed)
+
+        if (altitude_num > 40000 or altitude_num < 0):
+            self.error_field.set("Altitude has to be \n between 0 and 40000")
+            return
+        elif (enginePower_num > 100 or enginePower_num < 0):
+            self.error_field.set("Engine Power has to be \n between 0 and 100")
+            return
+        elif (verticalSpeed_num > 800 or verticalSpeed_num < 0):
+            self.error_field.set("Vertical Speed has to be \n between 0 and 800")
+            return
+        else:
+            self.error_field.set("")
         
-        self.altitude_field.set("")
-        self.enginePower_field.set("")
-        self.verticalSpeed_field.set("")        
+        print("The Altitude is : {}".format(altitude_num))
+        print("The Engine Power is : {}".format(enginePower_num))
+        print("The Vertical Speed is : {}".format(verticalSpeed_num))
 
 root = tk.Tk()
 root.geometry("400x200")
