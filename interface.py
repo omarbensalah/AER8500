@@ -11,6 +11,7 @@ class Interface:
         self.enginePower_field = tk.StringVar()
         self.verticalSpeed_field = tk.StringVar()
         
+        self.attitude_field = tk.StringVar()
         self.error_field = tk.StringVar()
         self.rtValue = 0
 
@@ -33,6 +34,7 @@ class Interface:
         self.actualValue_label = tk.Label(root, text = 'Actual Value', font = ('calibre', 10, 'bold'))
 
         self.error_label = tk.Label(root, textvariable = self.error_field, font = ('calibre', 10, 'bold'), fg = "red")
+        self.attitude_label = tk.Label(root, textvariable = self.attitude_field, font = ('calibre', 10, 'bold'))
 
         self.metric_label.grid(row = 0, column = 0)
         self.wantedValue_label.grid(row = 0, column = 1)
@@ -53,12 +55,13 @@ class Interface:
         self.sub_btn.grid(row = 5, column = 1)
 
         self.error_label.grid(row = 6, column = 1)
+        self.attitude_label.grid(row = 7, column = 1)
+        self.attitude_field.set("AU_SOL")
 
-        self.count = 0
         self.update()
     
     def readCalculatorData(self):
-        FIFO = '/tmp/calculatorToInterfaceA429'
+        FIFO = '/tmp/bus'
 
         try:
             os.mkfifo(FIFO)
@@ -83,14 +86,21 @@ class Interface:
         enginePower = self.enginePower_field.get()
         verticalSpeed = self.verticalSpeed_field.get()
 
-        if (len(altitude) == 0 or len(enginePower) == 0 or len(verticalSpeed) == 0):
-            self.error_field.set("Please fill all fields")
-            return
-        
-        altitude_num = int(altitude)
-        enginePower_num = int(enginePower)
-        verticalSpeed_num = int(verticalSpeed)
+        altitudeEmpty = True if len(altitude) == 0 else False
+        enginePowerEmpty = True if len(enginePower) == 0 else False
+        verticalSpeedEmpty = True if len(verticalSpeed)  == 0 else False
 
+        if (not altitudeEmpty and (not enginePowerEmpty or not enginePowerEmpty)):
+            self.error_field.set("You should provide Altitude \n or Engine Power and Vertical Speed")
+            return
+        elif ((not enginePowerEmpty and verticalSpeedEmpty) or (verticalSpeedEmpty and not verticalSpeedEmpty)):
+            self.error_field.set("You should provide Altitude \n or Engine Power and Vertical Speed")
+            return
+
+        altitude_num = int(altitude) if altitude != "" else 0
+        enginePower_num = int(enginePower) if enginePower != "" else 0
+        verticalSpeed_num = int(verticalSpeed) if verticalSpeed != "" else 0
+        
         if (altitude_num > 40000 or altitude_num < 0):
             self.error_field.set("Altitude has to be \n between 0 and 40000")
             return
@@ -108,7 +118,12 @@ class Interface:
         print("The Vertical Speed is : {}".format(verticalSpeed_num))
 
 root = tk.Tk()
-root.geometry("400x200")
+root.geometry("800x400")
 root.title("Panneau de controle")
+
+root.columnconfigure(0, weight=2)
+root.columnconfigure(1, weight=2)
+root.columnconfigure(2, weight=2)
+
 Interface(root)
 root.mainloop()
