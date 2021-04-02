@@ -20,6 +20,7 @@ angleOfAttack = {
 
 import hashlib
 
+hashList=[]
 
 def insert(source_str, insert_str, pos):
     return ''.join((source_str[:pos], insert_str, source_str[pos:]))
@@ -69,6 +70,14 @@ def decodeBcdBnr(binString, icd):
 
     return val
 
+def encodeBcd(value,icd):
+    value=str(value)
+    if icd==2:
+	dataString=format(int(value[0]),"03b")+format(int(value[1]),"04b")+format(int(value[2]),"04b")+format(int(value[3]),"04b")+"0000"
+    elif icd==3:
+        dataString=format(int(value[0]),"03b")+format(int(value[1]),"04b")+format(int(value[2]),"04b")+"00000000"
+    return dataString
+
 def decodeA429(word, source):
     if len(word) != 10:
         return {}
@@ -113,41 +122,44 @@ def decodeA429(word, source):
         else:
             return {}
 
-def encodeA429(source,label,status,altitude,verticalSpeed,angleOfAttack):
-    if label == 1:
+def encodeA429(source,label,status,value):
+    if label == 1: # Altitude
 	if source == "agr":
-	    binString="110"+format(altitude,"016b")+"0000"+encodeLabel(1)
+	    binString="110"+format(value,"016b")+"0000"+encodeLabel(1)
 	elif source == "cal":
-	    binString="000"+format(altitude,"016b")+encodeAvionicsStatus(status)+"00"+encodeLabel(1)
-    #elif label==2:
-    	#if verticalSpeed>0:
-	    #binString="000"+
-
+	    binString="000"+format(value,"016b")+encodeAvionicsStatus(status)+"00"+encodeLabel(1)
+    elif label==2: # Taux de montee
+        valueToString=str(abs(value)).zfill(4)
+    	if value>0:
+	    binString="00"+encodeBcd(valueToString,label)+"00"+encodeLabel(2)
+	elif value<0:
+	    binString="11"+encodeBcd(valueToString,label)+"00"+encodeLabel(2)
+    elif label==3: # Angle d'attaque
+        valueToString=str(abs(value)).zfill(3)
+    	if value>0:
+	    binString="00"+encodeBcd(valueToString,label)+"00"+encodeLabel(3)
+	elif value<0:
+	    binString="11"+encodeBcd(valueToString,label)+"00"+encodeLabel(3)
+    
+    # check Parity
     if((binString.count("1") % 2) == 0):
-	return hex(int("1"+binString,2))
+	return "0x{:08x}".format(int("1"+binString,2))
     else:
-	return hex(int("0"+binString,2))
+	return "0x{:08x}".format(int("0"+binString,2))
     
 def encodeAFDX(hexString):
-    f=open("hash.txt","a")
-    f.write(hashlib.md5(hexString.encode()).hexdigest()+'\n')
-    f.close()
+    hashList.append(hashlib.md5(hexString.encode()).hexdigest())
 
 def decodeAFDX(hexString):
-    fin=open("hash.txt","r+")
-    data=fin.read()
     hashString=hashlib.md5(hexString.encode()).hexdigest()
-    if hashString in data:
-	data=data.replace(hashString,"")
-	fin.close()
-    fout=open("hash.txt","w")
-    fout.write(data)
-    fout.close()
+    
+    if hashString in hashList:
+	hashList.remove(hashString)
  
 
 print(decodeA429("0xe0005480", "agr"))
 print(encodeLabel(2))
-print(encodeA429("cal",1,"CHANGEMENT_ALT",5,5,5))
+print(encodeA429("cal",2,"CHANGEMENT_ALT",0003))
 encodeAFDX("0x80005480")
 encodeAFDX("0x80005481")
 encodeAFDX("0x80115480")
