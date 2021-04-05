@@ -73,7 +73,7 @@ def decodeBcdBnr(binString, icd):
 def encodeBcd(value,icd):
     value=str(value)
     if icd==2:
-	dataString=format(int(value[0]),"03b")+format(int(value[1]),"04b")+format(int(value[2]),"04b")+format(int(value[3]),"04b")+"0000"
+        dataString=format(int(value[0]),"03b")+format(int(value[1]),"04b")+format(int(value[2]),"04b")+format(int(value[3]),"04b")+"0000"
     elif icd==3:
         dataString=format(int(value[0]),"03b")+format(int(value[1]),"04b")+format(int(value[2]),"04b")+"00000000"
     return dataString
@@ -124,28 +124,28 @@ def decodeA429(word, source):
 
 def encodeA429(source,label,status,value):
     if label == 1: # Altitude
-	if source == "agr":
-	    binString="110"+format(value,"016b")+"0000"+encodeLabel(1)
-	elif source == "cal":
-	    binString="000"+format(value,"016b")+encodeAvionicsStatus(status)+"00"+encodeLabel(1)
+        if source == "agr":
+            binString="110"+format(value,"016b")+"0000"+encodeLabel(1)
+        elif source == "cal":
+            binString="000"+format(value,"016b")+encodeAvionicsStatus(status)+"00"+encodeLabel(1)
     elif label==2: # Taux de montee
         valueToString=str(abs(value)).zfill(4)
-    	if value>0:
-	    binString="00"+encodeBcd(valueToString,label)+"00"+encodeLabel(2)
-	elif value<0:
-	    binString="11"+encodeBcd(valueToString,label)+"00"+encodeLabel(2)
+        if value>0:
+            binString="00"+encodeBcd(valueToString,label)+"00"+encodeLabel(2)
+        elif value<0:
+            binString="11"+encodeBcd(valueToString,label)+"00"+encodeLabel(2)
     elif label==3: # Angle d'attaque
         valueToString=str(abs(value)).zfill(3)
-    	if value>0:
-	    binString="00"+encodeBcd(valueToString,label)+"00"+encodeLabel(3)
-	elif value<0:
-	    binString="11"+encodeBcd(valueToString,label)+"00"+encodeLabel(3)
-    
+        if value>0:
+            binString="00"+encodeBcd(valueToString,label)+"00"+encodeLabel(3)
+        elif value<0:
+            binString="11"+encodeBcd(valueToString,label)+"00"+encodeLabel(3)
+
     # check Parity
     if((binString.count("1") % 2) == 0):
-	return "0x{:08x}".format(int("1"+binString,2))
+        return "0x{:08x}".format(int("1"+binString,2))
     else:
-	return "0x{:08x}".format(int("0"+binString,2))
+        return "0x{:08x}".format(int("0"+binString,2))
     
 def encodeAFDX(hexString):
     hashList.append(hashlib.md5(hexString.encode()).hexdigest())
@@ -154,15 +154,11 @@ def decodeAFDX(hexString):
     hashString=hashlib.md5(hexString.encode()).hexdigest()
     
     if hashString in hashList:
-	hashList.remove(hashString)
+        hashList.remove(hashString)
  
 
-print(decodeA429("0xe0005480", "agr"))
-print(encodeLabel(2))
-print(encodeA429("cal",2,"CHANGEMENT_ALT",0003))
-encodeAFDX("0x80005480")
-encodeAFDX("0x80005481")
-encodeAFDX("0x80115480")
-decodeAFDX("0x80005481")
+
+print(decodeA429(encodeA429("cal",1,"CHANGEMENT_ALT",1200),"cal"))
+
 
 # use C0, 80 and 40 as first two bytesss
