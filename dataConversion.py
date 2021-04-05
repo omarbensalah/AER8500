@@ -62,10 +62,13 @@ def encodeAvionicsStatus(status):
 	return "10"
 
 def decodeBcdBnr(binString, icd):
+    print(binString)
+    print(int(binString[5]))
     val = -int(binString[5]) * icd["range"]
     step = icd["range"] / 2
     for i in range(5, icd["NBS"]):
         val += int(binString[i]) * step
+	print(val)
         step /= 2
 
     return val
@@ -125,9 +128,9 @@ def decodeA429(word, source):
 def encodeA429(source,label,status,value):
     if label == 1: # Altitude
         if source == "agr":
-            binString="110"+format(value,"016b")+"0000"+encodeLabel(1)
+            binString="110"+"{:<016b}".format(value)+"00"+encodeLabel(1)
         elif source == "cal":
-            binString="000"+format(value,"016b")+encodeAvionicsStatus(status)+"00"+encodeLabel(1)
+            binString="000"+"{:<016b}".format(value)+encodeAvionicsStatus(status)+"00"+encodeLabel(1)
     elif label==2: # Taux de montee
         valueToString=str(abs(value)).zfill(4)
         if value>0:
@@ -140,7 +143,7 @@ def encodeA429(source,label,status,value):
             binString="00"+encodeBcd(valueToString,label)+"00"+encodeLabel(3)
         elif value<0:
             binString="11"+encodeBcd(valueToString,label)+"00"+encodeLabel(3)
-
+    print(binString)
     # check Parity
     if((binString.count("1") % 2) == 0):
         return "0x{:08x}".format(int("1"+binString,2))
@@ -157,7 +160,7 @@ def decodeAFDX(hexString):
         hashList.remove(hashString)
  
 
-
+print(encodeA429("cal",1,"CHANGEMENT_ALT",1200))
 print(decodeA429(encodeA429("cal",1,"CHANGEMENT_ALT",1200),"cal"))
 
 
