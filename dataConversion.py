@@ -62,16 +62,31 @@ def encodeAvionicsStatus(status):
 	return "10"
 
 def decodeBcdBnr(binString, icd):
-    print(binString)
-    print(int(binString[5]))
-    val = -int(binString[5]) * icd["range"]
+    val = -int(binString[6]) * icd["range"]
     step = icd["range"] / 2
-    for i in range(5, icd["NBS"]):
+    for i in range(6, (icd["NBS"]+6)):
         val += int(binString[i]) * step
-	print(val)
-        step /= 2
+        step =step/ 2
 
     return val
+
+def encodeBcdBnr(value,icd):
+    
+    binString=""
+    step=icd["range"]
+    for x in range(1,icd["NBS"]):
+        
+        if value==0:
+            binString+="0"
+        if step > value:
+            binString+="0"
+        elif step <=value:
+            value-=step
+            binString+="1"
+        step=step/2
+    return binString
+
+
 
 def encodeBcd(value,icd):
     value=str(value)
@@ -86,7 +101,6 @@ def decodeA429(word, source):
         return {}
 
     binString = A429WordToBin(word)
-    print(binString)
 
     if (binString.count("1") % 2) == 0:
         return "Bad Parity"
@@ -128,27 +142,29 @@ def decodeA429(word, source):
 def encodeA429(source,label,status,value):
     if label == 1: # Altitude
         if source == "agr":
-            binString="110"+"{:<016b}".format(value)+"00"+encodeLabel(1)
+            binString="11"+encodeBcdBnr(value,altitude)+encodeAvionicsStatus(status)+"00"+encodeLabel(1)
         elif source == "cal":
-            binString="000"+"{:<016b}".format(value)+encodeAvionicsStatus(status)+"00"+encodeLabel(1)
+            binString="00"+encodeBcdBnr(value,altitude)+encodeAvionicsStatus(status)+"00"+encodeLabel(1)
     elif label==2: # Taux de montee
-        valueToString=str(abs(value)).zfill(4)
+        
         if value>0:
-            binString="00"+encodeBcd(valueToString,label)+"00"+encodeLabel(2)
+            binString="00"+encodeBcdBnr(abs(value),verticalSpeed)+"00"+encodeLabel(2)
         elif value<0:
-            binString="11"+encodeBcd(valueToString,label)+"00"+encodeLabel(2)
+            binString="11"+encodeBcdBnr(abs(value),verticalSpeed)+"00"+encodeLabel(2)
     elif label==3: # Angle d'attaque
-        valueToString=str(abs(value)).zfill(3)
+        
         if value>0:
-            binString="00"+encodeBcd(valueToString,label)+"00"+encodeLabel(3)
+            binString="00"+encodeBcdBnr(abs(value),angleOfAttack)+"00"+encodeLabel(3)
         elif value<0:
-            binString="11"+encodeBcd(valueToString,label)+"00"+encodeLabel(3)
+            binString="11"+encodeBcdBnr(abs(value),angleOfAttack)+"00"+encodeLabel(3)
     print(binString)
     # check Parity
     if((binString.count("1") % 2) == 0):
-        return "0x{:08x}".format(int("1"+binString,2))
+        binString="1"+binString
+        return hex(int(binString,2))
     else:
-        return "0x{:08x}".format(int("0"+binString,2))
+        binString="0"+binString
+        return hex(int(binString,2))
     
 def encodeAFDX(hexString):
     hashList.append(hashlib.md5(hexString.encode()).hexdigest())
@@ -160,8 +176,10 @@ def decodeAFDX(hexString):
         hashList.remove(hashString)
  
 
-print(encodeA429("cal",1,"CHANGEMENT_ALT",1200))
+
 print(decodeA429(encodeA429("cal",1,"CHANGEMENT_ALT",1200),"cal"))
+#print(encodeBnr(1200,altitude))
+print(decodeA429("0x804b0480","cal"))
 
 
 # use C0, 80 and 40 as first two bytesss
