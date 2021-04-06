@@ -7,35 +7,55 @@ import threading
   
 class Interface:
     def __init__(self, master):
+        self.initInputFields()
+        self.initOutputs()
+        self.initStaticElements()
+        self.positionElementsOnGridGui()
+
+        self.update()
+
+
+    # Init Fields and values of outputs
+    def initOutputs(self):
+        # Fields
+        self.altitude_rt = tk.Label(root, font=('calibre', 10, 'bold'))
+        self.enginePower_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
+        self.verticalSpeed_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
+        self.error_label = tk.Label(root, textvariable = self.error_field, font = ('calibre', 10, 'bold'), fg = "red")
+        self.avionicsUnit_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
+
+        # Inputs
+        self.altitude = 0
+        self.enginePower = 0
+        self.verticalSpeed = 0
+        self.avionicsUnit = "AU_SOL"
+        
+    # Init Input Fields
+    def initInputFields(self):
         self.altitude_field = tk.StringVar()
         self.enginePower_field = tk.StringVar()
         self.verticalSpeed_field = tk.StringVar()
-        
-        self.attitude_field = tk.StringVar()
+        self.avionicsUnit_field = tk.StringVar()
         self.error_field = tk.StringVar()
-        self.rtValue = 0
 
         self.altitude_label = tk.Label(root, text = 'Altitude', font=('calibre', 10, 'bold'))
         self.altitude_entry = tk.Entry(root, textvariable = self.altitude_field, font=('calibre', 10, 'normal'))
-        self.altitude_rt = tk.Label(root, text = '500', font=('calibre', 10, 'bold'))
-        
+
         self.enginePower_label = tk.Label(root, text = 'Engine Power', font = ('calibre', 10, 'bold'))
         self.enginePower_entry = tk.Entry(root, textvariable = self.enginePower_field, font = ('calibre', 10, 'normal'))
-        self.enginePower_rt = tk.Label(root, text = '50%', font = ('calibre', 10, 'bold'))
 
         self.verticalSpeed_label = tk.Label(root, text = 'Vertical Speed', font = ('calibre', 10, 'bold'))
         self.verticalSpeed_entry = tk.Entry(root, textvariable = self.verticalSpeed_field, font = ('calibre', 10, 'normal'))
-        self.verticalSpeed_rt = tk.Label(root, text = '2500 fpm', font = ('calibre', 10, 'bold'))
-        
-        self.sub_btn=tk.Button(root, text = 'Submit', command = self.submit)
 
+    # Init UI static elements: First row with columns titles
+    def initStaticElements(self):
         self.metric_label = tk.Label(root, text = 'Metric', font=('calibre', 10, 'bold'))
         self.wantedValue_label = tk.Label(root, text = 'Wanted Value', font = ('calibre', 10, 'bold'))
         self.actualValue_label = tk.Label(root, text = 'Actual Value', font = ('calibre', 10, 'bold'))
+        self.sub_btn=tk.Button(root, text = 'Submit', command = self.submit)
 
-        self.error_label = tk.Label(root, textvariable = self.error_field, font = ('calibre', 10, 'bold'), fg = "red")
-        self.attitude_label = tk.Label(root, textvariable = self.attitude_field, font = ('calibre', 10, 'bold'))
-
+    # Position Elements on GUI
+    def positionElementsOnGridGui(self):
         self.metric_label.grid(row = 0, column = 0)
         self.wantedValue_label.grid(row = 0, column = 1)
         self.actualValue_label.grid(row = 0, column = 2)
@@ -55,13 +75,11 @@ class Interface:
         self.sub_btn.grid(row = 5, column = 1)
 
         self.error_label.grid(row = 6, column = 1)
-        self.attitude_label.grid(row = 7, column = 1)
-        self.attitude_field.set("AU_SOL")
+        self.avionicsUnit_rt.grid(row = 7, column = 1)
 
-        self.update()
-    
+    # Reads data from pipe
     def readCalculatorData(self):
-        FIFO = '/tmp/bus'
+        FIFO = '/tmp/calculatorToInterface'
 
         try:
             os.mkfifo(FIFO)
@@ -74,13 +92,22 @@ class Interface:
                 data = fifo.read()
                 if len(data) == 0:
                     break
-                self.rtValue = data
+                dataTab = data.split(",")
+                self.altitude = dataTab[0]
+                self.avionicsUnit = dataTab[1]
+                self.enginePower = dataTab[2]
+                self.verticalSpeed = dataTab[3]
 
+    # Updates the Gui
     def update(self):
         self.readCalculatorData()
-        self.altitude_rt.configure(text = '{} ft'.format(self.rtValue))
+        self.altitude_rt.configure(text = '{} ft'.format(self.altitude))
+        self.avionicsUnit_rt.configure(text = '{}'.format(self.avionicsUnit))
+        self.enginePower_rt.configure(text = '{} %'.format(self.enginePower))
+        self.verticalSpeed_rt.configure(text = '{} fpm'.format(self.verticalSpeed))
         self.altitude_rt.after(500, self.update)
 
+    # Submit values to Calculator
     def submit(self):
         altitude = self.altitude_field.get()
         enginePower = self.enginePower_field.get()
