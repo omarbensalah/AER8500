@@ -3,6 +3,9 @@ import time
 import os
 import errno
 import threading
+import sys
+import subprocess
+import signal
 
   
 class Interface:
@@ -79,24 +82,22 @@ class Interface:
 
     # Reads data from pipe
     def readCalculatorData(self):
-        FIFO = '/tmp/calculatorToInterface'
-
         try:
-            os.mkfifo(FIFO)
+            os.mkfifo('/tmp/calculatorToInterface')
         except OSError as oe: 
             if oe.errno != errno.EEXIST:
                 raise
 
-        with open(FIFO) as fifo:
+        with open('/tmp/calculatorToInterface') as fifo:
             while True:
                 data = fifo.read()
                 if len(data) == 0:
                     break
                 dataTab = data.split(",")
                 self.altitude = dataTab[0]
-                self.avionicsUnit = dataTab[1]
-                self.enginePower = dataTab[2]
-                self.verticalSpeed = dataTab[3]
+                self.enginePower = dataTab[1]
+                self.verticalSpeed = dataTab[2]
+                self.avionicsUnit = dataTab[3]
 
     # Updates the Gui
     def update(self):
@@ -123,6 +124,9 @@ class Interface:
         elif ((not enginePowerEmpty and verticalSpeedEmpty) or (verticalSpeedEmpty and not verticalSpeedEmpty)):
             self.error_field.set("You should provide Altitude \n or Engine Power and Vertical Speed")
             return
+        elif (altitudeEmpty and enginePowerEmpty and verticalSpeedEmpty):
+            self.error_field.set("You should provide Altitude \n or Engine Power and Vertical Speed")
+            return
 
         altitude_num = int(altitude) if altitude != "" else 0
         enginePower_num = int(enginePower) if enginePower != "" else 0
@@ -139,10 +143,11 @@ class Interface:
             return
         else:
             self.error_field.set("")
-        
-        print("The Altitude is : {}".format(altitude_num))
-        print("The Engine Power is : {}".format(enginePower_num))
-        print("The Vertical Speed is : {}".format(verticalSpeed_num))
+
+        os.kill(childPid, signal.SIGUSR1)
+
+        with open('/tmp/interfaceToCalculator', 'w') as f:
+            f.write("{},{},{}".format(altitude,enginePower,verticalSpeed))
 
 root = tk.Tk()
 root.geometry("800x400")
@@ -152,5 +157,10 @@ root.columnconfigure(0, weight=2)
 root.columnconfigure(1, weight=2)
 root.columnconfigure(2, weight=2)
 
-Interface(root)
-root.mainloop()
+childPid = os.fork()
+if childPid == 0:
+    os.system('python ./calculator.py')
+else:
+    Interface(root)
+    root.mainloop()
+
