@@ -12,7 +12,11 @@ verticalSpeed = 1500
 requestedAltitude = 0
 requestedEnginePower = 0
 requestedVerticalSpeed = 0
+
+
     
+print("Hello my pid is {}, Please run the interface with it as an argument to start simulation".format(os.getpid()))
+
 def handleNewRequestedValues(signum, frame):
     try:
         os.mkfifo('/tmp/interfaceToCalculator')

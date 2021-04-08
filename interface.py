@@ -157,6 +157,12 @@ root.columnconfigure(0, weight=2)
 root.columnconfigure(1, weight=2)
 root.columnconfigure(2, weight=2)
 
+if os.path.exists('/tmp/interfaceToCalculator'):
+    os.remove('/tmp/interfaceToCalculator')
+
+if os.path.exists('/tmp/calculatorToInterface'):
+    os.remove('/tmp/calculatorToInterface')
+
 childPid = os.fork()
 if childPid == 0:
     os.system('python ./calculator.py')
