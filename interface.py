@@ -165,8 +165,7 @@ if os.path.exists('/tmp/calculatorToInterface'):
 
 childPid = os.fork()
 if childPid == 0:
-    os.system('python ./calculator.py')
+    exec(open('calculator.py').read())
 else:
     Interface(root)
     root.mainloop()
-

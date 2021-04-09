@@ -13,10 +13,6 @@ requestedAltitude = 0
 requestedEnginePower = 0
 requestedVerticalSpeed = 0
 
-
-    
-print("Hello my pid is {}, Please run the interface with it as an argument to start simulation".format(os.getpid()))
-
 def handleNewRequestedValues(signum, frame):
     try:
         os.mkfifo('/tmp/interfaceToCalculator')
@@ -30,11 +26,11 @@ def handleNewRequestedValues(signum, frame):
             if len(data) == 0:
                 break
             dataTab = data.split(",")
-            requestedAltitude = dataTab[0]
-            enginePower = dataTab[1]
-            verticalSpeed = dataTab[2]
+            requestedAltitude = int(dataTab[0]) if dataTab[0] != "" else 0
+            requestedEnginePower = int(dataTab[1]) if dataTab[1] != "" else 0
+            requestedVerticalSpeed = int(dataTab[2]) if dataTab[2] != "" else 0
 
-    print("new values are {}, {}, {}".format(requestedAltitude, requestedEnginePower,requestedVerticalSpeed))
+    print("New values are {}, {}, {}".format(requestedAltitude, requestedEnginePower,requestedVerticalSpeed))
 
 signal.signal(signal.SIGUSR1, handleNewRequestedValues)
 
