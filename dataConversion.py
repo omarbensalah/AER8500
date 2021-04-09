@@ -1,7 +1,8 @@
 altitude = {
   "NBS": 16,
   "unite": "pieds",
-  "range": 65536
+  "range": 65536,
+  "resolution": 1
 }
 
 verticalSpeed = {
@@ -39,19 +40,19 @@ def extractSsm(binString):
 
 def decodeAvionicsStatus(binString):
     subStr = binString[22:24]
-    if subStr=="00":
+    if subStr == "00":
       return "AU_SOL"
-    elif subStr=="01":
+    elif subStr == "01":
       return "CHANGEMENT_ALT"
-    elif subStr=="10":
+    elif subStr == "10":
       return "VOL_CROISIERE"
 
 def encodeAvionicsStatus(status):
-    if status=="AU_SOL":
+    if status == "AU_SOL":
 	return "00"
-    elif status=="CHANGEMENT_ALT":
+    elif status == "CHANGEMENT_ALT":
 	return "01"
-    elif status=="VOL_CROISIERE":
+    elif status == "VOL_CROISIERE":
 	return "10"
 
 def decodeBcdBnr(binString, icd):
@@ -68,7 +69,7 @@ def encodeBcdBnr(value,icd):
     step = icd["range"]
     e = icd["resolution"]
     for x in range(1, icd["NBS"]):
-        if abs(value) < e:
+        if value == 0:
             binString += "0"
         if step > value:
             binString += "0"
@@ -76,7 +77,6 @@ def encodeBcdBnr(value,icd):
             value -= step
             binString += "1"
         step = step / 2.0
-        print(binString)
 
     return binString
 
@@ -114,16 +114,16 @@ def decodeA429(word, source):
 
         elif label == 3: # Angle d'ataque BCD
             if ssm == "00":
-                return {"angleOfAttack": decodeBcdBnr(binString, verticalSpeed)}
+                return {"angleOfAttack": decodeBcdBnr(binString, angleOfAttack)}
             elif ssm == "11":
-                return {"angleOfAttack": -decodeBcdBnr(binString, verticalSpeed)}
+                return {"angleOfAttack": -decodeBcdBnr(binString, angleOfAttack)}
             else:
                 return {}
     
         else:
             return {}
 
-def encodeA429(source,label,status,value):
+def encodeA429(source, label, status, value):
     if label == 1: # Altitude
         if source == "agr":
             binString = "11" + encodeBcdBnr(value,altitude) + encodeAvionicsStatus(status) + "00" + encodeLabel(1)
@@ -141,16 +141,17 @@ def encodeA429(source,label,status,value):
             binString = "00" + encodeBcdBnr(abs(value),angleOfAttack) + "00" + encodeLabel(3)
         elif value < 0:
             binString = "11" + encodeBcdBnr(abs(value),angleOfAttack) + "00" + encodeLabel(3)
-
+    
     if ((binString.count("1") % 2) == 0):
         binString = "1" + binString
-        return hex(int(binString,2))
     else:
-        binString="0" + binString
-        return hex(int(binString,2))
+        binString = "0" + binString
+
+    return hex(int(binString,2))
  
 
-print(decodeA429(encodeA429("cal",3,"CHANGEMENT_ALT",2.5),"cal"))
+print(encodeA429("cal",2,"CHANGEMENT_ALT",150))
+print(decodeA429(encodeA429("cal",2,"CHANGEMENT_ALT",150), "cal"))
 
 
 # use C0, 80 and 40 as first two bytesss
