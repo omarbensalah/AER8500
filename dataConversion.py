@@ -18,6 +18,9 @@ angleOfAttack = {
   "resolution": 0.0625
 }
 
+ssm_0="00"
+ssm_3="11"
+
 def insert(source_str, insert_str, pos):
     return ''.join((source_str[:pos], insert_str, source_str[pos:]))
 
@@ -32,7 +35,7 @@ def extractLabel(binString):
     return int("0b" + binString[-8:][::-1], 2)
 
 def encodeLabel(label):
-    return format(label,"08b")[::-1]
+    return str('{0:08b}'.format(label)[::-1])
 
 def extractSsm(binString):
     return binString[3:5]    
@@ -63,6 +66,15 @@ def decodeBcdBnr(binString, icd):
 
     return val
 
+def decodeBcd(binString,label):
+    
+    if label==2:
+        numString=str(int(binString[5:8],2))+str(int(binString[8:12],2))+str(int(binString[12:16],2))+"."+str(int(binString[16:20],2))
+        
+    elif label==3:
+        numString=str(int(binString[5:6],2))+str(int(binString[6:10],2))+"."+str(int(binString[10:14],2))
+    return float(numString)
+
 def encodeBcdBnr(value,icd):
     binString = ""
     step = icd["range"]
@@ -76,9 +88,21 @@ def encodeBcdBnr(value,icd):
             value -= step
             binString += "1"
         step = step / 2.0
-        print(binString)
 
     return binString
+
+def encodeBcd(value,label):
+    value=value /1.0
+    value=int(value*10)
+    if label==2:
+        value=str(value).zfill(4)
+    
+        binString='{0:03b}'.format(int(value[0]))+'{0:04b}'.format(int(value[1]))+'{0:04b}'.format(int(value[2]))+'{0:04b}'.format(int(value[3]))
+    elif label==3:
+        value=str(value).zfill(3)
+    
+        binString='{0:01b}'.format(int(value[0]))+'{0:04b}'.format(int(value[1]))+'{0:04b}'.format(int(value[2]))
+    return binString.ljust(21,'0')
 
 def decodeA429(word, source):
     if len(word) != 10:
@@ -106,17 +130,17 @@ def decodeA429(word, source):
 
         elif label == 2: # Taux de montee BCD
             if ssm == "00":
-                return {"verticalSpeed": decodeBcdBnr(binString, verticalSpeed)}
+                return {"verticalSpeed": decodeBcd(binString, label)}
             elif ssm == "11":
-                return {"verticalSpeed": -decodeBcdBnr(binString, verticalSpeed)}
+                return {"verticalSpeed": -decodeBcd(binString, label)}
             else:
                 return {}
 
         elif label == 3: # Angle d'ataque BCD
             if ssm == "00":
-                return {"angleOfAttack": decodeBcdBnr(binString, verticalSpeed)}
+                return {"angleOfAttack": decodeBcd(binString, label)}
             elif ssm == "11":
-                return {"angleOfAttack": -decodeBcdBnr(binString, verticalSpeed)}
+                return {"angleOfAttack": -decodeBcd(binString, label)}
             else:
                 return {}
     
@@ -132,25 +156,27 @@ def encodeA429(source,label,status,value):
 
     elif label == 2: # Taux de montee
         if value > 0:
-            binString = "00" + encodeBcdBnr(abs(value), verticalSpeed) + "00" + encodeLabel(2)
+            binString = str(ssm_0 )+ encodeBcd(abs(value),label) + encodeLabel(label)
         elif value < 0:
-            binString = "11" + encodeBcdBnr(abs(value),verticalSpeed) + "00" + encodeLabel(2)
+            binString = ssm_3 + encodeBcd(abs(value),label) + encodeLabel(label)
 
     elif label == 3: # Angle d'attaque
         if value > 0:
-            binString = "00" + encodeBcdBnr(abs(value),angleOfAttack) + "00" + encodeLabel(3)
+            binString = ssm_0+ encodeBcd(abs(value),label) + encodeLabel(int(label))
         elif value < 0:
-            binString = "11" + encodeBcdBnr(abs(value),angleOfAttack) + "00" + encodeLabel(3)
-
+            binString = ssm_3 + encodeBcd(abs(value),label)  + encodeLabel(int(label))
+    
     if ((binString.count("1") % 2) == 0):
         binString = "1" + binString
-        return hex(int(binString,2))
     else:
         binString="0" + binString
-        return hex(int(binString,2))
+    return '0x{:08x}'.format(int(binString,2))
  
 
-print(decodeA429(encodeA429("cal",3,"CHANGEMENT_ALT",2.5),"cal"))
+#33print(decodeA429(encodeA429("cal",3,"CHANGEMENT_ALT",2.5),"cal"))
 
+
+print(decodeA429(encodeA429("agr",3,"CHANGEMENT_ALT",5.5),"agr"))
+#print(decodeA429("0x80094040","agr"))
 
 # use C0, 80 and 40 as first two bytesss
