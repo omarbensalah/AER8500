@@ -47,4 +47,4 @@ while True:
             enginePower -= 2
             verticalSpeed -= 100
             avionicsUnit = "CHANGEMENT_ALT"
-    time.sleep(0.5)
+    time.sleep(0.1)

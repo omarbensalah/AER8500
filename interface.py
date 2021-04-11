@@ -17,7 +17,6 @@ class Interface:
 
         self.update()
 
-
     # Init Fields and values of outputs
     def initOutputs(self):
         # Fields
@@ -106,7 +105,7 @@ class Interface:
         self.avionicsUnit_rt.configure(text = '{}'.format(self.avionicsUnit))
         self.enginePower_rt.configure(text = '{} %'.format(self.enginePower))
         self.verticalSpeed_rt.configure(text = '{} fpm'.format(self.verticalSpeed))
-        self.altitude_rt.after(500, self.update)
+        self.altitude_rt.after(100, self.update)
 
     # Submit values to Calculator
     def submit(self):
