@@ -80,14 +80,27 @@ def encodeBcdBnr(value,icd):
     binString = ""
     step = icd["range"]
     e = icd["resolution"]
-    for x in range(1, icd["NBS"]):
+    icd=icd["NBS"]
+    if value<0: #check if negative
+        binString += "1"
+        value=abs(value)
+        if value!=step:
+            step=step/2.0
+            icd-=1
+        else:
+            value -= step
+            icd-=1
+    
+    for x in range(1, icd):
         if value == 0:
             binString += "0"
         if step > value:
             binString += "0"
-        elif step < value or abs(step - value) < e:
+        elif step < value or abs(step - value) < e :
+            value=abs(value)
             value -= step
             binString += "1"
+        print(binString)
         step = step / 2.0
 
     return binString
@@ -180,6 +193,7 @@ def encodeA429(source, label, status, value):
 
 
 print(decodeA429(encodeA429("agr",3,"CHANGEMENT_ALT",5.5),"agr"))
+print(encodeA429("cal",1,"CHANGEMENT_ALT",-65536))
 #print(decodeA429("0x80094040","agr"))
 
 # use C0, 80 and 40 as first two bytesss
