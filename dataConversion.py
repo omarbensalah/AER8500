@@ -19,8 +19,8 @@ angleOfAttack = {
   "resolution": 0.0625
 }
 
-ssm_0="00"
-ssm_3="11"
+ssm_0 = "00"
+ssm_3 = "11"
 
 def insert(source_str, insert_str, pos):
     return ''.join((source_str[:pos], insert_str, source_str[pos:]))
@@ -28,8 +28,8 @@ def insert(source_str, insert_str, pos):
 def A429WordToBin(word):
     binStr = str(bin(int(word, 16)))
     while (len(binStr) < 34):
-        x = len(binStr)
         binStr = insert(binStr, "0", 2)
+
     return binStr
 
 def extractLabel(binString): 
@@ -58,7 +58,7 @@ def encodeAvionicsStatus(status):
     elif status == "VOL_CROISIERE":
 	return "10"
 
-def decodeBcdBnr(binString, icd):
+def decodeBnr(binString, icd):
     val = -int(binString[6]) * icd["range"]
     step = icd["range"] / 2.0
     for i in range(6, (icd["NBS"]+6)):
@@ -68,54 +68,51 @@ def decodeBcdBnr(binString, icd):
     return val
 
 def decodeBcd(binString,label):
-    
-    if label==2:
-        numString=str(int(binString[5:8],2))+str(int(binString[8:12],2))+str(int(binString[12:16],2))+"."+str(int(binString[16:20],2))
-        
-    elif label==3:
-        numString=str(int(binString[5:6],2))+str(int(binString[6:10],2))+"."+str(int(binString[10:14],2))
+    if label == 2:
+        numString = str(int(binString[5:9],2)) + str(int(binString[9:13],2)) + str(int(binString[13:17],2)) + "." + str(int(binString[17:21],2))
+    elif label == 3:
+        numString = str(int(binString[5:6],2)) + str(int(binString[6:10],2)) + "." + str(int(binString[10:14],2))
+
     return float(numString)
 
-def encodeBcdBnr(value,icd):
+def encodeBnr(value,icd):
     binString = ""
     step = icd["range"]
     e = icd["resolution"]
-    icd=icd["NBS"]
-    if value<0: #check if negative
+    nbs = icd["NBS"]
+    if value < 0: #check if negative
         binString += "1"
-        value=abs(value)
-        if value!=step:
-            step=step/2.0
-            icd-=1
+        value = abs(value)
+        if value != step:
+            step = step/2.0
+            nbs -= 1
         else:
             value -= step
-            icd-=1
+            nbs -= 1
     
-    for x in range(1, icd):
+    for x in range(1, nbs):
         if value == 0:
             binString += "0"
         if step > value:
             binString += "0"
         elif step < value or abs(step - value) < e :
-            value=abs(value)
+            value = abs(value)
             value -= step
             binString += "1"
-        print(binString)
         step = step / 2.0
 
     return binString
 
 def encodeBcd(value,label):
-    value=value /1.0
-    value=int(value*10)
-    if label==2:
-        value=str(value).zfill(4)
-    
-        binString='{0:03b}'.format(int(value[0]))+'{0:04b}'.format(int(value[1]))+'{0:04b}'.format(int(value[2]))+'{0:04b}'.format(int(value[3]))
-    elif label==3:
-        value=str(value).zfill(3)
-    
-        binString='{0:01b}'.format(int(value[0]))+'{0:04b}'.format(int(value[1]))+'{0:04b}'.format(int(value[2]))
+    value = value /1.0
+    value = int(value*10)
+    if label == 2:
+        value = str(value).zfill(4)
+        binString = '{0:04b}'.format(int(value[0])) + '{0:04b}'.format(int(value[1])) + '{0:04b}'.format(int(value[2])) + '{0:04b}'.format(int(value[3]))
+    elif label == 3:
+        value = str(value).zfill(3)
+        binString = '{0:01b}'.format(int(value[0])) + '{0:04b}'.format(int(value[1])) + '{0:04b}'.format(int(value[2]))
+
     return binString.ljust(21,'0')
 
 def decodeA429(word, source):
@@ -133,12 +130,12 @@ def decodeA429(word, source):
         if label == 1:
             if source == "agr": # Altitude BNR
                 if ssm == "11":
-                    return {"altitude": decodeBcdBnr(binString, altitude)}
+                    return {"altitude": decodeBnr(binString, altitude)}
                 else:
                     return "Bad SSM"
             elif source == "cal": # Avionics DIS
                 if ssm == "00":
-                    return {"avionicsUnit": decodeAvionicsStatus(binString),"altitude": decodeBcdBnr(binString, altitude)}
+                    return {"avionicsUnit": decodeAvionicsStatus(binString),"altitude": decodeBnr(binString, altitude)}
                 else:
                     return "Bad SSM"
 
@@ -152,9 +149,9 @@ def decodeA429(word, source):
 
         elif label == 3: # Angle d'ataque BCD
             if ssm == "00":
-                return {"angleOfAttack": decodeBcdBnr(binString, angleOfAttack)}
+                return {"angleOfAttack": decodeBcd(binString, label)}
             elif ssm == "11":
-                return {"angleOfAttack": -decodeBcdBnr(binString, angleOfAttack)}
+                return {"angleOfAttack": -decodeBcd(binString, label)}
             else:
                 return {}
     
@@ -164,19 +161,19 @@ def decodeA429(word, source):
 def encodeA429(source, label, status, value):
     if label == 1: # Altitude
         if source == "agr":
-            binString = "11" + encodeBcdBnr(value,altitude) + encodeAvionicsStatus(status) + "00" + encodeLabel(1)
+            binString = "11" + encodeBnr(value,altitude) + encodeAvionicsStatus(status) + "00" + encodeLabel(1)
         elif source == "cal":
-            binString = "00" + encodeBcdBnr(value,altitude) + encodeAvionicsStatus(status) + "00" + encodeLabel(1)
+            binString = "00" + encodeBnr(value,altitude) + encodeAvionicsStatus(status) + "00" + encodeLabel(1)
 
     elif label == 2: # Taux de montee
-        if value > 0:
-            binString = str(ssm_0 )+ encodeBcd(abs(value),label) + encodeLabel(label)
+        if value >= 0:
+            binString = ssm_0 + encodeBcd(abs(value),label) + encodeLabel(label)
         elif value < 0:
             binString = ssm_3 + encodeBcd(abs(value),label) + encodeLabel(label)
 
     elif label == 3: # Angle d'attaque
-        if value > 0:
-            binString = ssm_0+ encodeBcd(abs(value),label) + encodeLabel(int(label))
+        if value >= 0:
+            binString = ssm_0 + encodeBcd(abs(value),label) + encodeLabel(int(label))
         elif value < 0:
             binString = ssm_3 + encodeBcd(abs(value),label)  + encodeLabel(int(label))
     
@@ -185,15 +182,22 @@ def encodeA429(source, label, status, value):
     else:
         binString="0" + binString
     return '0x{:08x}'.format(int(binString,2))
- 
 
 
+# print(decodeA429(encodeA429("agr",3,"CHANGEMENT_ALT", 0),"agr"))
 
-#33print(decodeA429(encodeA429("cal",3,"CHANGEMENT_ALT",2.5),"cal"))
+# Exhaustive tests for all 3 parameters
 
+for i in range(0, 40000):
+    if decodeA429(encodeA429("agr",1,"CHANGEMENT_ALT", i),"agr") == {}:
+        print("Error not Equal {}".format(i))
 
-print(decodeA429(encodeA429("agr",3,"CHANGEMENT_ALT",5.5),"agr"))
-print(encodeA429("cal",1,"CHANGEMENT_ALT",-65536))
-#print(decodeA429("0x80094040","agr"))
+for i in range(-800, 800):
+    if decodeA429(encodeA429("agr",2,"CHANGEMENT_ALT", i),"agr")["verticalSpeed"] != i:
+        print("Error not Equal {}".format(i))
+
+for i in range(-16, 16):
+    if decodeA429(encodeA429("agr",3,"CHANGEMENT_ALT", i),"agr")["angleOfAttack"] != i:
+        print("Error not Equal {}".format(i))
 
 # use C0, 80 and 40 as first two bytesss
