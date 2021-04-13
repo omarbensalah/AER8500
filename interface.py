@@ -1,4 +1,4 @@
-import Tkinter as tk
+import tkinter as tk
 import time
 import os
 import errno
@@ -6,6 +6,7 @@ import threading
 import sys
 import subprocess
 import signal
+import psutil
 
   
 class Interface:
@@ -21,21 +22,21 @@ class Interface:
     def initOutputs(self):
         # Fields
         self.altitude_rt = tk.Label(root, font=('calibre', 10, 'bold'))
-        self.enginePower_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
+        self.angleOfAttack_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
         self.verticalSpeed_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
         self.error_label = tk.Label(root, textvariable = self.error_field, font = ('calibre', 10, 'bold'), fg = "red")
         self.avionicsUnit_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
 
         # Inputs
         self.altitude = 0
-        self.enginePower = 0
+        self.angleOfAttack = 0
         self.verticalSpeed = 0
         self.avionicsUnit = "AU_SOL"
         
     # Init Input Fields
     def initInputFields(self):
         self.altitude_field = tk.StringVar()
-        self.enginePower_field = tk.StringVar()
+        self.angleOfAttack_field = tk.StringVar()
         self.verticalSpeed_field = tk.StringVar()
         self.avionicsUnit_field = tk.StringVar()
         self.error_field = tk.StringVar()
@@ -43,8 +44,8 @@ class Interface:
         self.altitude_label = tk.Label(root, text = 'Altitude', font=('calibre', 10, 'bold'))
         self.altitude_entry = tk.Entry(root, textvariable = self.altitude_field, font=('calibre', 10, 'normal'))
 
-        self.enginePower_label = tk.Label(root, text = 'Engine Power', font = ('calibre', 10, 'bold'))
-        self.enginePower_entry = tk.Entry(root, textvariable = self.enginePower_field, font = ('calibre', 10, 'normal'))
+        self.angleOfAttack_label = tk.Label(root, text = 'Angle Of Attack', font = ('calibre', 10, 'bold'))
+        self.angleOfAttack_entry = tk.Entry(root, textvariable = self.angleOfAttack_field, font = ('calibre', 10, 'normal'))
 
         self.verticalSpeed_label = tk.Label(root, text = 'Vertical Speed', font = ('calibre', 10, 'bold'))
         self.verticalSpeed_entry = tk.Entry(root, textvariable = self.verticalSpeed_field, font = ('calibre', 10, 'normal'))
@@ -66,9 +67,9 @@ class Interface:
         self.altitude_entry.grid(row = 1, column = 1)
         self.altitude_rt.grid(row = 1, column = 2)
 
-        self.enginePower_label.grid(row = 2, column = 0)
-        self.enginePower_entry.grid(row = 2, column = 1)
-        self.enginePower_rt.grid(row = 2, column = 2)
+        self.angleOfAttack_label.grid(row = 2, column = 0)
+        self.angleOfAttack_entry.grid(row = 2, column = 1)
+        self.angleOfAttack_rt.grid(row = 2, column = 2)
 
         self.verticalSpeed_label.grid(row = 3, column = 0)
         self.verticalSpeed_entry.grid(row = 3, column = 1)
@@ -94,7 +95,7 @@ class Interface:
                     break
                 dataTab = data.split(",")
                 self.altitude = dataTab[0]
-                self.enginePower = dataTab[1]
+                self.angleOfAttack = dataTab[1]
                 self.verticalSpeed = dataTab[2]
                 self.avionicsUnit = dataTab[3]
 
@@ -103,39 +104,39 @@ class Interface:
         self.readCalculatorData()
         self.altitude_rt.configure(text = '{} ft'.format(self.altitude))
         self.avionicsUnit_rt.configure(text = '{}'.format(self.avionicsUnit))
-        self.enginePower_rt.configure(text = '{} %'.format(self.enginePower))
+        self.angleOfAttack_rt.configure(text = '{} %'.format(self.angleOfAttack))
         self.verticalSpeed_rt.configure(text = '{} fpm'.format(self.verticalSpeed))
         self.altitude_rt.after(100, self.update)
 
     # Submit values to Calculator
     def submit(self):
         altitude = self.altitude_field.get()
-        enginePower = self.enginePower_field.get()
+        angleOfAttack = self.angleOfAttack_field.get()
         verticalSpeed = self.verticalSpeed_field.get()
 
         altitudeEmpty = True if len(altitude) == 0 else False
-        enginePowerEmpty = True if len(enginePower) == 0 else False
+        angleOfAttackEmpty = True if len(angleOfAttack) == 0 else False
         verticalSpeedEmpty = True if len(verticalSpeed)  == 0 else False
 
-        if (not altitudeEmpty and (not enginePowerEmpty or not enginePowerEmpty)):
-            self.error_field.set("You should provide Altitude \n or Engine Power and Vertical Speed")
+        if (not altitudeEmpty and (not angleOfAttackEmpty or not angleOfAttackEmpty)):
+            self.error_field.set("You should provide Altitude \n or Angle Of Attack and Vertical Speed")
             return
-        elif ((not enginePowerEmpty and verticalSpeedEmpty) or (verticalSpeedEmpty and not verticalSpeedEmpty)):
-            self.error_field.set("You should provide Altitude \n or Engine Power and Vertical Speed")
+        elif ((not angleOfAttackEmpty and verticalSpeedEmpty) or (verticalSpeedEmpty and not verticalSpeedEmpty)):
+            self.error_field.set("You should provide Altitude \n or Angle Of Attack and Vertical Speed")
             return
-        elif (altitudeEmpty and enginePowerEmpty and verticalSpeedEmpty):
-            self.error_field.set("You should provide Altitude \n or Engine Power and Vertical Speed")
+        elif (altitudeEmpty and angleOfAttackEmpty and verticalSpeedEmpty):
+            self.error_field.set("You should provide Altitude \n or Angle Of Attack and Vertical Speed")
             return
 
         altitude_num = int(altitude) if altitude != "" else 0
-        enginePower_num = int(enginePower) if enginePower != "" else 0
+        angleOfAttack_num = int(angleOfAttack) if angleOfAttack != "" else 0
         verticalSpeed_num = int(verticalSpeed) if verticalSpeed != "" else 0
         
         if (altitude_num > 40000 or altitude_num < 0):
             self.error_field.set("Altitude has to be \n between 0 and 40000")
             return
-        elif (enginePower_num > 100 or enginePower_num < 0):
-            self.error_field.set("Engine Power has to be \n between 0 and 100")
+        elif (angleOfAttack_num > 16 or angleOfAttack_num < -16):
+            self.error_field.set("Angle Of Attack has to be \n between 0 and 100")
             return
         elif (verticalSpeed_num > 800 or verticalSpeed_num < 0):
             self.error_field.set("Vertical Speed has to be \n between 0 and 800")
@@ -146,7 +147,7 @@ class Interface:
         os.kill(childPid, signal.SIGUSR1)
 
         with open('/tmp/interfaceToCalculator', 'w') as f:
-            f.write("{},{},{}".format(altitude,enginePower,verticalSpeed))
+            f.write("{},{},{}".format(altitude,angleOfAttack,verticalSpeed))
 
 root = tk.Tk()
 root.geometry("800x400")
@@ -155,6 +156,13 @@ root.title("Panneau de controle")
 root.columnconfigure(0, weight=2)
 root.columnconfigure(1, weight=2)
 root.columnconfigure(2, weight=2)
+
+this_proc = os.getpid()
+
+for proc in psutil.process_iter():
+    procd = proc.as_dict(attrs=['pid', 'name'])
+    if "python" in str(procd['name']) and procd['pid'] != this_proc:
+        proc.kill()
 
 if os.path.exists('/tmp/interfaceToCalculator'):
     os.remove('/tmp/interfaceToCalculator')
