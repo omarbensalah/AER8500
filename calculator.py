@@ -10,7 +10,7 @@ angleOfAttack = 50
 verticalSpeed = 1500
 
 requestedAltitude = 0
-requestedEnginePower = 0
+requestedAngleOfAttack = 0
 requestedVerticalSpeed = 0
 
 def handleNewRequestedValues(signum, frame):
@@ -26,25 +26,35 @@ def handleNewRequestedValues(signum, frame):
             if len(data) == 0:
                 break
             dataTab = data.split(",")
-            requestedAltitude = int(dataTab[0]) if dataTab[0] != "" else 0
-            requestedEnginePower = int(dataTab[1]) if dataTab[1] != "" else 0
-            requestedVerticalSpeed = int(dataTab[2]) if dataTab[2] != "" else 0
 
-    print("New values are {}, {}, {}".format(requestedAltitude, requestedEnginePower,requestedVerticalSpeed))
+            decodedAltitude = decodeA429(dataTab[0], "agr")["altitude"]
+            decodedAngleOfAttack =  decodeA429(dataTab[1], "agr")["verticalSpeed"]
+            decodedVerticalSpeed = decodeA429(dataTab[2], "agr")["angleOfAttack"]
+            
+            requestedAltitude = int(decodedAltitude) if decodedAltitude != "" else 0
+            requestedAngleOfAttack = int(decodedAngleOfAttack) if decodedAngleOfAttack != "" else 0
+            requestedVerticalSpeed = int(decodedVerticalSpeed) if decodedVerticalSpeed != "" else 0
+
+    print("New requested values are {}, {}, {}".format(requestedAltitude, requestedAngleOfAttack,requestedVerticalSpeed))
 
 signal.signal(signal.SIGUSR1, handleNewRequestedValues)
 
 while True:
     with open('/tmp/calculatorToInterface', 'w') as f:
-        f.write("{},{},{},{}".format(altitude,angleOfAttack,verticalSpeed,avionicsUnit))
         if (random.uniform(0, 1) > 0.25):
             altitude += 100
-            angleOfAttack += 2
+            angleOfAttack += 0.1
             verticalSpeed += 100
             avionicsUnit = "AU_SOL"
         else:
             altitude -= 100
-            angleOfAttack -= 2
+            angleOfAttack -= 0.1
             verticalSpeed -= 100
             avionicsUnit = "CHANGEMENT_ALT"
+
+        encodedAltitude = encodeA429("cal", 1, avionicsUnit, altitude)
+        encodedAngleOfAttack = encodeA429("cal", 2, "", angleOfAttack)
+        encodedVerticalSpeed = encodeA429("cal", 3, "", verticalSpeed)
+
+        f.write("{},{},{}".format(encodedAltitude, encodedAngleOfAttack, encodedVerticalSpeed))
     time.sleep(0.1)

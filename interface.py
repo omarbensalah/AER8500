@@ -7,6 +7,8 @@ import sys
 import subprocess
 import signal
 import psutil
+from dataConversion import encodeA429
+from dataConversion import decodeA429
 
   
 class Interface:
@@ -94,17 +96,24 @@ class Interface:
                 if len(data) == 0:
                     break
                 dataTab = data.split(",")
-                self.altitude = dataTab[0]
-                self.angleOfAttack = dataTab[1]
-                self.verticalSpeed = dataTab[2]
-                self.avionicsUnit = dataTab[3]
+
+                temp = decodeA429(dataTab[0], "cal")
+                decodedAltitude = temp["altitude"]
+                decodedAngleOfAttack =  decodeA429(dataTab[1], "cal")["verticalSpeed"]
+                decodedVerticalSpeed = decodeA429(dataTab[2], "cal")["angleOfAttack"]
+                decodedAvionicsUnit = temp["avionicsUnit"]
+
+                self.altitude = decodedAltitude
+                self.angleOfAttack = decodedAngleOfAttack
+                self.verticalSpeed = decodedVerticalSpeed
+                self.avionicsUnit = decodedAvionicsUnit
 
     # Updates the Gui
     def update(self):
         self.readCalculatorData()
         self.altitude_rt.configure(text = '{} ft'.format(self.altitude))
         self.avionicsUnit_rt.configure(text = '{}'.format(self.avionicsUnit))
-        self.angleOfAttack_rt.configure(text = '{} %'.format(self.angleOfAttack))
+        self.angleOfAttack_rt.configure(text = '{} °'.format(self.angleOfAttack))
         self.verticalSpeed_rt.configure(text = '{} fpm'.format(self.verticalSpeed))
         self.altitude_rt.after(100, self.update)
 
@@ -147,7 +156,10 @@ class Interface:
         os.kill(childPid, signal.SIGUSR1)
 
         with open('/tmp/interfaceToCalculator', 'w') as f:
-            f.write("{},{},{}".format(altitude,angleOfAttack,verticalSpeed))
+            f.write("{},{},{}".format(
+                                    encodeA429("agr", 1, "", altitude_num),
+                                    encodeA429("agr", 2, "", angleOfAttack_num),
+                                    encodeA429("agr", 3, "", verticalSpeed_num)))
 
 root = tk.Tk()
 root.geometry("800x400")
