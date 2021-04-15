@@ -7,9 +7,7 @@ import sys
 import subprocess
 import signal
 import psutil
-from dataConversion import encodeA429
-from dataConversion import decodeA429
-
+from dataConversion import encodeA429, decodeA429, encodeAfdx, decodeAfdx
   
 class Interface:
     def __init__(self, master):
@@ -156,10 +154,12 @@ class Interface:
         os.kill(childPid, signal.SIGUSR1)
 
         with open('/tmp/interfaceToCalculator', 'w') as f:
-            f.write("{},{},{}".format(
-                                    encodeA429("agr", 1, "", altitude_num),
-                                    encodeA429("agr", 2, "", angleOfAttack_num),
-                                    encodeA429("agr", 3, "", verticalSpeed_num)))
+            if random.uniform(0, 1) > 0.5: # simulate data arriving at different moments 
+                f.write("{},{},{}".format(encodeA429("agr", 1, "", altitude_num), encodeA429("agr", 2, "", angleOfAttack_num), encodeA429("agr", 3, "", verticalSpeed_num)))
+                f.write("{},{},{}".format(encodeAfdx("agr", 1, "", altitude_num), encodeAfdx("agr", 2, "", angleOfAttack_num), encodeAfdx("agr", 3, "", verticalSpeed_num)))
+            else:
+                f.write("{},{},{}".format(encodeAfdx("agr", 1, "", altitude_num), encodeAfdx("agr", 2, "", angleOfAttack_num), encodeAfdx("agr", 3, "", verticalSpeed_num)))
+                f.write("{},{},{}".format(encodeA429("agr", 1, "", altitude_num), encodeA429("agr", 2, "", angleOfAttack_num), encodeA429("agr", 3, "", verticalSpeed_num)))
 
 root = tk.Tk()
 root.geometry("800x400")

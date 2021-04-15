@@ -1,3 +1,6 @@
+import string
+import random
+
 altitude = {
   "NBS": 16,
   "unite": "pieds",
@@ -175,3 +178,18 @@ def encodeA429(source, label, status, value):
         binString="0" + binString
 
     return '0x{:08x}'.format(int(binString,2))
+
+def randomHexWord(length):
+   letters = "0123456789ABCDEF"
+   return ''.join(random.choice(letters) for i in range(length))
+
+def encodeAfdx(source, label, status, value):
+    randomPrefix = randomHexWord(50)
+    a429World = encodeA429(source, label, status, value)
+    suffixPrefix = randomHexWord(17)
+    return "0x" + randomPrefix + a429World[2:] + suffixPrefix
+
+def decodeAfdx(word, source):
+    return decodeA429("0x" + word[52:60], source)
+    
+print(decodeAfdx(encodeAfdx("cal", 1, "AU_SOL", 12000), "cal"))
