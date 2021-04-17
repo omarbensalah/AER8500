@@ -115,7 +115,7 @@ class Interface:
         self.altitude_rt.configure(text = '{} ft'.format(self.altitude))
         self.avionicsUnit_rt.configure(text = '{}'.format(self.avionicsUnit))
         self.angleOfAttack_rt.configure(text = '{} °'.format(self.angleOfAttack))
-        self.verticalSpeed_rt.configure(text = '{} fpm'.format(self.verticalSpeed))
+        self.verticalSpeed_rt.configure(text = '{} m/min'.format(self.verticalSpeed))
         self.altitude_rt.after(100, self.update)
 
     # Submit values to Calculator
