@@ -13,6 +13,10 @@ requestedAltitude = 0
 requestedAngleOfAttack = 0
 requestedVerticalSpeed = 0
 
+decodedAltitude = 0
+decodedAngleOfAttack = 0
+decodedVerticalSpeed = 0
+
 def handleNewRequestedValues(signum, frame):
     try:
         os.mkfifo('/tmp/interfaceToCalculator')
@@ -27,15 +31,20 @@ def handleNewRequestedValues(signum, frame):
                 break
             dataTab = data.split(",")
 
-            decodedAltitude = decodeA429(dataTab[0], "agr")["altitude"]
-            decodedAngleOfAttack =  decodeA429(dataTab[1], "agr")["verticalSpeed"]
-            decodedVerticalSpeed = decodeA429(dataTab[2], "agr")["angleOfAttack"]
+            if (len(dataTab[0]) == 10): #A429
+                decodedAltitude = decodeA429(dataTab[0], "agr")["altitude"]
+                decodedAngleOfAttack =  decodeA429(dataTab[1], "agr")["verticalSpeed"]
+                decodedVerticalSpeed = decodeA429(dataTab[2], "agr")["angleOfAttack"]
+            else:
+                decodedAltitude = decodeAfdx(dataTab[0], "agr")["altitude"]
+                decodedAngleOfAttack =  decodeAfdx(dataTab[1], "agr")["verticalSpeed"]
+                decodedVerticalSpeed = decodeAfdx(dataTab[2], "agr")["angleOfAttack"]
             
             requestedAltitude = int(decodedAltitude) if decodedAltitude != "" else 0
             requestedAngleOfAttack = int(decodedAngleOfAttack) if decodedAngleOfAttack != "" else 0
             requestedVerticalSpeed = int(decodedVerticalSpeed) if decodedVerticalSpeed != "" else 0
 
-    print("New requested values are {}, {}, {}".format(requestedAltitude, requestedAngleOfAttack,requestedVerticalSpeed))
+            print("New requested values are {}, {}, {}".format(requestedAltitude, requestedAngleOfAttack,requestedVerticalSpeed))
 
 signal.signal(signal.SIGUSR1, handleNewRequestedValues)
 
@@ -52,9 +61,12 @@ while True:
             verticalSpeed -= 100
             avionicsUnit = "CHANGEMENT_ALT"
 
-        encodedAltitude = encodeA429("cal", 1, avionicsUnit, altitude)
-        encodedAngleOfAttack = encodeA429("cal", 2, "", angleOfAttack)
-        encodedVerticalSpeed = encodeA429("cal", 3, "", verticalSpeed)
+        A429 = "{},{},{}".format(encodeA429("cal", 1, avionicsUnit, altitude), encodeA429("cal", 2, "", verticalSpeed), encodeA429("cal", 3, "", angleOfAttack))
+        Afdx = "{},{},{}".format(encodeAfdx("cal", 1, avionicsUnit, altitude), encodeAfdx("cal", 2, "", verticalSpeed), encodeAfdx("cal", 3, "", angleOfAttack))
 
-        f.write("{},{},{}".format(encodedAltitude, encodedAngleOfAttack, encodedVerticalSpeed))
+        if (random.uniform(0, 1) > 0.5):
+            f.write(A429 + "," + Afdx)
+        else:
+            f.write(Afdx + "," + A429)
+
     time.sleep(0.1)

@@ -7,7 +7,8 @@ import sys
 import subprocess
 import signal
 import psutil
-from dataConversion import encodeA429, decodeA429, encodeAfdx, decodeAfdx
+import random
+from dataConversion import encodeA429, decodeA429, encodeAfdx, decodeAfdx, getA429WordFromAfdx
   
 class Interface:
     def __init__(self, master):
@@ -95,16 +96,18 @@ class Interface:
                     break
                 dataTab = data.split(",")
 
-                temp = decodeA429(dataTab[0], "cal")
-                decodedAltitude = temp["altitude"]
-                decodedAngleOfAttack =  decodeA429(dataTab[1], "cal")["verticalSpeed"]
-                decodedVerticalSpeed = decodeA429(dataTab[2], "cal")["angleOfAttack"]
-                decodedAvionicsUnit = temp["avionicsUnit"]
-
-                self.altitude = decodedAltitude
-                self.angleOfAttack = decodedAngleOfAttack
-                self.verticalSpeed = decodedVerticalSpeed
-                self.avionicsUnit = decodedAvionicsUnit
+                if (len(dataTab[0]) == 10): #A429
+                    temp = decodeA429(dataTab[0], "cal")
+                    self.altitude = temp["altitude"]
+                    self.verticalSpeed =  decodeA429(dataTab[1], "cal")["verticalSpeed"]
+                    self.angleOfAttack = decodeA429(dataTab[2], "cal")["angleOfAttack"]
+                    self.avionicsUnit = temp["avionicsUnit"]
+                else:
+                    temp = decodeAfdx(dataTab[0], "cal")
+                    self.altitude = temp["altitude"]
+                    self.verticalSpeed =  decodeAfdx(dataTab[1], "cal")["verticalSpeed"]
+                    self.angleOfAttack = decodeAfdx(dataTab[2], "cal")["angleOfAttack"]
+                    self.avionicsUnit = temp["avionicsUnit"]
 
     # Updates the Gui
     def update(self):
@@ -150,16 +153,23 @@ class Interface:
             return
         else:
             self.error_field.set("")
+            self.altitude_field.set("")
+            self.angleOfAttack_field.set("")
+            self.verticalSpeed_field.set("")
+
+        A429 = "{},{},{}".format(encodeA429("agr", 1, "", altitude_num), encodeA429("agr", 2, "", angleOfAttack_num), encodeA429("agr", 3, "", verticalSpeed_num))
+        Afdx = "{},{},{}".format(encodeAfdx("agr", 1, "", altitude_num), encodeAfdx("agr", 2, "", angleOfAttack_num), encodeAfdx("agr", 3, "", verticalSpeed_num))
 
         os.kill(childPid, signal.SIGUSR1)
 
         with open('/tmp/interfaceToCalculator', 'w') as f:
             if random.uniform(0, 1) > 0.5: # simulate data arriving at different moments 
-                f.write("{},{},{}".format(encodeA429("agr", 1, "", altitude_num), encodeA429("agr", 2, "", angleOfAttack_num), encodeA429("agr", 3, "", verticalSpeed_num)))
-                f.write("{},{},{}".format(encodeAfdx("agr", 1, "", altitude_num), encodeAfdx("agr", 2, "", angleOfAttack_num), encodeAfdx("agr", 3, "", verticalSpeed_num)))
+                f.write(A429 + "," + Afdx)
+                print("sending A429 first")
             else:
-                f.write("{},{},{}".format(encodeAfdx("agr", 1, "", altitude_num), encodeAfdx("agr", 2, "", angleOfAttack_num), encodeAfdx("agr", 3, "", verticalSpeed_num)))
-                f.write("{},{},{}".format(encodeA429("agr", 1, "", altitude_num), encodeA429("agr", 2, "", angleOfAttack_num), encodeA429("agr", 3, "", verticalSpeed_num)))
+                f.write(Afdx + "," + A429)
+                print("sending Afdx first")
+
 
 root = tk.Tk()
 root.geometry("800x400")
