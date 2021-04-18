@@ -114,7 +114,7 @@ class Interface:
         self.readCalculatorData()
         self.altitude_rt.configure(text = '{} ft'.format(self.altitude))
         self.avionicsUnit_rt.configure(text = '{}'.format(self.avionicsUnit))
-        self.angleOfAttack_rt.configure(text = '{} °'.format(self.angleOfAttack))
+        self.angleOfAttack_rt.configure(text = '{} deg'.format(self.angleOfAttack))
         self.verticalSpeed_rt.configure(text = '{} m/min'.format(self.verticalSpeed))
         self.altitude_rt.after(100, self.update)
 
