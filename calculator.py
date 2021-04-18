@@ -4,10 +4,10 @@ import os
 import signal
 import errno
 
-altitude = 1200
-avionicsUnit = "CHANGEMENT_ALT"
-angleOfAttack = 50
-verticalSpeed = 1500
+altitude = 0
+avionicsUnit = "AU_SOL"
+angleOfAttack = 0
+verticalSpeed = 0
 
 requestedAltitude = 0
 requestedAngleOfAttack = 0
@@ -55,8 +55,24 @@ signal.signal(signal.SIGUSR1, handleNewRequestedValues)
 while True:
     with open('/tmp/calculatorToInterface', 'w') as f:
         if (APmode == "AOA"):
+            avionicsUnit="VOL_CROISIERE"
+            if(requestedAngleOfAttack-angleOfAttack>1):
+                angleOfAttack+=0.1
+                avionicsUnit="CHANGEMENT_ALT"
+            elif(requestedAngleOfAttack-angleOfAttack<1):
+                angleOfAttack-=0.1
+                avionicsUnit="CHANGEMENT_ALT"
+            if(angleOfAttack>0):
+                verticalSpeed+=(requestedVerticalSpeed-verticalSpeed)
+            else:
+                verticalSpeed+=(requestedVerticalSpeed-verticalSpeed)
+        
             
-        elif (APmode = "ALT"):
+        #elif (APmode == "ALT"):
+            #if(requestedAltitude>altitude):
+            #elif(requestedAltitude<altitude):
+
+        altitude+=verticalSpeed/60*0.1
 
         A429 = "{},{},{}".format(encodeA429("cal", 1, avionicsUnit, altitude), encodeA429("cal", 2, "", verticalSpeed), encodeA429("cal", 3, "", angleOfAttack))
         Afdx = "{},{},{}".format(encodeAfdx("cal", 1, avionicsUnit, altitude), encodeAfdx("cal", 2, "", verticalSpeed), encodeAfdx("cal", 3, "", angleOfAttack))
