@@ -100,14 +100,14 @@ class Interface:
 
                 if (len(dataTab[0]) == 10): #A429
                     temp = decodeA429(dataTab[0], "cal")
-                    self.altitude = temp["altitude"]
-                    self.verticalSpeed =  decodeA429(dataTab[1], "cal")["verticalSpeed"]
+                    self.altitude = int(temp["altitude"])
+                    self.verticalSpeed =  int(decodeA429(dataTab[1], "cal")["verticalSpeed"])
                     # self.angleOfAttack = decodeA429(dataTab[2], "cal")["angleOfAttack"]
                     self.avionicsUnit = temp["avionicsUnit"]
                 else:
                     temp = decodeAfdx(dataTab[0], "cal")
-                    self.altitude = temp["altitude"]
-                    self.verticalSpeed =  decodeAfdx(dataTab[1], "cal")["verticalSpeed"]
+                    self.altitude = int(temp["altitude"])
+                    self.verticalSpeed =  int(decodeAfdx(dataTab[1], "cal")["verticalSpeed"])
                     # self.angleOfAttack = decodeAfdx(dataTab[2], "cal")["angleOfAttack"]
                     self.avionicsUnit = temp["avionicsUnit"]
 
@@ -166,15 +166,13 @@ class Interface:
         A429 = "{},{},{}".format(encodeA429("agr", 1, "", altitude_num), encodeA429("agr", 3, "", self.angleOfAttack), encodeA429("agr", 2, "", verticalSpeed_num))
         Afdx = "{},{},{}".format(encodeAfdx("agr", 1, "", altitude_num), encodeAfdx("agr", 3, "", self.angleOfAttack), encodeAfdx("agr", 2, "", verticalSpeed_num))
 
-        os.kill(childPid, signal.SIGUSR1)
-
         with open('/tmp/interfaceToCalculator', 'w') as f:
             if random.uniform(0, 1) > 0.5: # simulate data arriving at different moments 
                 f.write(A429 + "," + Afdx)
-                print("sending A429 first")
             else:
                 f.write(Afdx + "," + A429)
-                print("sending Afdx first")
+
+        os.kill(childPid, signal.SIGUSR1)
 
 
 root = tk.Tk()

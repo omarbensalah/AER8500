@@ -16,7 +16,6 @@ requestedVerticalSpeed = 0
 decodedAltitude = 0
 decodedAngleOfAttack = 0
 decodedVerticalSpeed = 0
-
 APmode = ""
 
 def handleNewRequestedValues(signum, frame):
@@ -25,6 +24,8 @@ def handleNewRequestedValues(signum, frame):
     except OSError as oe: 
         if oe.errno != errno.EEXIST:
             raise
+
+    global APmode, requestedAltitude, requestedAngleOfAttack, requestedVerticalSpeed
 
     with open('/tmp/interfaceToCalculator') as fifo:
         while True:
@@ -48,31 +49,29 @@ def handleNewRequestedValues(signum, frame):
 
             APmode = "AOA" if requestedAngleOfAttack != 0 else "ALT"
 
-            print("New requested values are {}, {}, {}".format(requestedAltitude, requestedAngleOfAttack,requestedVerticalSpeed))
 
 signal.signal(signal.SIGUSR1, handleNewRequestedValues)
 
 while True:
     with open('/tmp/calculatorToInterface', 'w') as f:
         if (APmode == "AOA"):
-            avionicsUnit="VOL_CROISIERE"
-            if(requestedAngleOfAttack-angleOfAttack>1):
-                angleOfAttack+=0.1
-                avionicsUnit="CHANGEMENT_ALT"
-            elif(requestedAngleOfAttack-angleOfAttack<1):
-                angleOfAttack-=0.1
-                avionicsUnit="CHANGEMENT_ALT"
-            if(angleOfAttack>0):
-                verticalSpeed+=(requestedVerticalSpeed-verticalSpeed)
-            else:
-                verticalSpeed+=(requestedVerticalSpeed-verticalSpeed)
-        
+            avionicsUnit = "VOL_CROISIERE"
+            if (requestedAngleOfAttack - angleOfAttack > 1):
+                angleOfAttack += 0.1
+                avionicsUnit = "CHANGEMENT_ALT"
+            elif (requestedAngleOfAttack - angleOfAttack < 1):
+                angleOfAttack -= 0.1
+                avionicsUnit = "CHANGEMENT_ALT"
             
-        #elif (APmode == "ALT"):
-            #if(requestedAltitude>altitude):
-            #elif(requestedAltitude<altitude):
+            verticalSpeed += (requestedVerticalSpeed - verticalSpeed) * 0.167 
 
-        altitude+=verticalSpeed/60*0.1
+        elif (APmode == "ALT"):
+            if(requestedAltitude - altitude > 100):
+                
+            elif(requestedAltitude - altitude < 100):
+                verticalSpeed
+
+        altitude += verticalSpeed / 60 * 0.1
 
         A429 = "{},{},{}".format(encodeA429("cal", 1, avionicsUnit, altitude), encodeA429("cal", 2, "", verticalSpeed), encodeA429("cal", 3, "", angleOfAttack))
         Afdx = "{},{},{}".format(encodeAfdx("cal", 1, avionicsUnit, altitude), encodeAfdx("cal", 2, "", verticalSpeed), encodeAfdx("cal", 3, "", angleOfAttack))
@@ -81,5 +80,5 @@ while True:
             f.write(A429 + "," + Afdx)
         else:
             f.write(Afdx + "," + A429)
-
+        
     time.sleep(0.1)
