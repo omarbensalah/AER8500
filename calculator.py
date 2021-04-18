@@ -9,9 +9,11 @@ avionicsUnit = "AU_SOL"
 angleOfAttack = 0
 verticalSpeed = 0
 
+
 requestedAltitude = 0
 requestedAngleOfAttack = 0
 requestedVerticalSpeed = 0
+
 
 decodedAltitude = 0
 decodedAngleOfAttack = 0
@@ -55,21 +57,38 @@ signal.signal(signal.SIGUSR1, handleNewRequestedValues)
 while True:
     with open('/tmp/calculatorToInterface', 'w') as f:
         if (APmode == "AOA"):
-            avionicsUnit = "VOL_CROISIERE"
             if (requestedAngleOfAttack - angleOfAttack > 1):
                 angleOfAttack += 0.1
-                avionicsUnit = "CHANGEMENT_ALT"
+                
             elif (requestedAngleOfAttack - angleOfAttack < 1):
                 angleOfAttack -= 0.1
-                avionicsUnit = "CHANGEMENT_ALT"
-            
+                
+            avionicsUnit = "CHANGEMENT_ALT"
             verticalSpeed += (requestedVerticalSpeed - verticalSpeed) * 0.167 
 
         elif (APmode == "ALT"):
             if(requestedAltitude - altitude > 100):
+                if(enginePower > 80):
+                    enginePower -= 2
+                else:
+                    enginePower += 2
+                if(verticalSpeed > 600):
+                    verticalSpeed -= 100
+                elif(verticalSpeed<600):
+                    verticalSpeed += 100
                 
             elif(requestedAltitude - altitude < 100):
-                verticalSpeed
+                if(enginePower > 80):
+                    enginePower -= 2
+                else:
+                    enginePower += 2
+                if(verticalSpeed > 600):
+                    verticalSpeed -= 100
+                elif(verticalSpeed<600):
+                    verticalSpeed += 100
+                
+            avionicsUnit = "CHANGEMENT_ALT"
+            
 
         altitude += verticalSpeed / 60 * 0.1
 
