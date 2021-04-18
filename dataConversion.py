@@ -163,8 +163,6 @@ def decodeA429(word, source):
             else:
                 return "Bad SSM"
 
-
-    
         else:
             return {}
 

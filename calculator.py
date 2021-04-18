@@ -2,23 +2,21 @@ import time
 import random
 import os
 import signal
+import math
 import errno
 
 altitude = 0
 avionicsUnit = "AU_SOL"
 angleOfAttack = 0
 verticalSpeed = 0
-
+enginePower = 0
+totalSpeed = 0
+APmode = ""
 
 requestedAltitude = 0
 requestedAngleOfAttack = 0
 requestedVerticalSpeed = 0
 
-
-decodedAltitude = 0
-decodedAngleOfAttack = 0
-decodedVerticalSpeed = 0
-APmode = ""
 
 def handleNewRequestedValues(signum, frame):
     try:
@@ -49,8 +47,7 @@ def handleNewRequestedValues(signum, frame):
             requestedAngleOfAttack = float(decodedAngleOfAttack) if decodedAngleOfAttack != "" else 0
             requestedVerticalSpeed = int(decodedVerticalSpeed) if decodedVerticalSpeed != "" else 0
 
-            APmode = "AOA" if requestedAngleOfAttack != 0 else "ALT"
-
+            APmode = "ALT" if requestedAltitude != 0 else "AOA"
 
 signal.signal(signal.SIGUSR1, handleNewRequestedValues)
 
@@ -65,6 +62,8 @@ while True:
                 
             avionicsUnit = "CHANGEMENT_ALT"
             verticalSpeed += (requestedVerticalSpeed - verticalSpeed) * 0.167 
+
+            enginePower = requestedVerticalSpeed / (math.sin(math.radians(requestedAngleOfAttack)) * 10)
 
         elif (APmode == "ALT"):
             if(requestedAltitude - altitude > 100):
@@ -92,12 +91,12 @@ while True:
 
         altitude += verticalSpeed / 60 * 0.1
 
-        A429 = "{},{},{}".format(encodeA429("cal", 1, avionicsUnit, altitude), encodeA429("cal", 2, "", verticalSpeed), encodeA429("cal", 3, "", angleOfAttack))
-        Afdx = "{},{},{}".format(encodeAfdx("cal", 1, avionicsUnit, altitude), encodeAfdx("cal", 2, "", verticalSpeed), encodeAfdx("cal", 3, "", angleOfAttack))
+        A429 = "{},{},{},{}".format(encodeA429("cal", 1, avionicsUnit, altitude), encodeA429("cal", 2, "", verticalSpeed), encodeA429("cal", 3, "", angleOfAttack), encodeA429("cal", 4, "", enginePower))
+        Afdx = "{},{},{},{}".format(encodeAfdx("cal", 1, avionicsUnit, altitude), encodeAfdx("cal", 2, "", verticalSpeed), encodeAfdx("cal", 3, "", angleOfAttack), encodeAfdx("cal", 4, "", enginePower))
 
         if (random.uniform(0, 1) > 0.5):
             f.write(A429 + "," + Afdx)
         else:
             f.write(Afdx + "," + A429)
         
-    time.sleep(0.1)
+    time.sleep(1)

@@ -103,21 +103,23 @@ class Interface:
                     self.altitude = int(temp["altitude"])
                     self.verticalSpeed =  int(decodeA429(dataTab[1], "cal")["verticalSpeed"])
                     self.angleOfAttack = decodeA429(dataTab[2], "cal")["angleOfAttack"]
+                    self.enginePower = decodeA429(dataTab[3], "cal")["enginePower"]
                     self.avionicsUnit = temp["avionicsUnit"]
                 else:
                     temp = decodeAfdx(dataTab[0], "cal")
                     self.altitude = int(temp["altitude"])
                     self.verticalSpeed =  int(decodeAfdx(dataTab[1], "cal")["verticalSpeed"])
                     self.angleOfAttack = decodeAfdx(dataTab[2], "cal")["angleOfAttack"]
+                    self.enginePower = decodeAfdx(dataTab[3], "cal")["enginePower"]
                     self.avionicsUnit = temp["avionicsUnit"]
 
     # Updates the Gui
     def update(self):
         self.readCalculatorData()
-        self.altitude_rt.configure(text = '{} ft'.format(self.altitude))
+        self.altitude_rt.configure(text = 'Altitude: {} ft'.format(self.altitude))
         self.avionicsUnit_rt.configure(text = '{}'.format(self.avionicsUnit))
-        self.enginePower_rt.configure(text = '{} %'.format(self.enginePower))
-        self.verticalSpeed_rt.configure(text = '{} m/min'.format(self.verticalSpeed))
+        self.enginePower_rt.configure(text = 'Engine Power: {} %'.format(int(self.enginePower)))
+        self.verticalSpeed_rt.configure(text = 'Vertical Speed: {} m/min'.format(self.verticalSpeed))
         self.altitude_rt.after(100, self.update)
 
     # Submit values to Calculator
@@ -158,14 +160,9 @@ class Interface:
             self.altitude_field.set("")
             self.angleOfAttack_field.set("")
             self.verticalSpeed_field.set("")
-        
-        
 
-        
-        
-
-        A429 = "{},{},{}".format(encodeA429("agr", 1, "", altitude_num), encodeA429("agr", 3, "", self.angleOfAttack), encodeA429("agr", 2, "", verticalSpeed_num))
-        Afdx = "{},{},{}".format(encodeAfdx("agr", 1, "", altitude_num), encodeAfdx("agr", 3, "", self.angleOfAttack), encodeAfdx("agr", 2, "", verticalSpeed_num))
+        A429 = "{},{},{}".format(encodeA429("agr", 1, "", altitude_num), encodeA429("agr", 3, "", angleOfAttack_num), encodeA429("agr", 2, "", verticalSpeed_num))
+        Afdx = "{},{},{}".format(encodeAfdx("agr", 1, "", altitude_num), encodeAfdx("agr", 3, "", angleOfAttack_num), encodeAfdx("agr", 2, "", verticalSpeed_num))
 
         with open('/tmp/interfaceToCalculator', 'w') as f:
             if random.uniform(0, 1) > 0.5: # simulate data arriving at different moments 
@@ -177,7 +174,7 @@ class Interface:
 
 
 root = tk.Tk()
-root.geometry("800x400")
+root.geometry("1200x400")
 root.title("Panneau de controle")
 
 root.columnconfigure(0, weight=2)
