@@ -8,6 +8,13 @@ altitude = {
   "resolution": 1
 }
 
+enginePower = {
+  "NBS": 16,
+  "unite": "%",
+  "range": 128,
+  "resolution": 1
+}
+
 verticalSpeed = {
   "NBS": 14,
   "unite": "metres/minutes",
@@ -149,6 +156,14 @@ def decodeA429(word, source):
                 return {"angleOfAttack": -decodeBcd(binString, label)}
             else:
                 return {}
+
+        if label == 4:
+            if ssm == "11":
+                return {"enginePower": decodeBnr(binString, enginePower)}
+            else:
+                return "Bad SSM"
+
+
     
         else:
             return {}
@@ -171,6 +186,10 @@ def encodeA429(source, label, status, value):
             binString = ssm_0 + encodeBcd(abs(value),label) + encodeLabel(int(label))
         elif value < 0:
             binString = ssm_3 + encodeBcd(abs(value),label)  + encodeLabel(int(label))
+
+    elif label == 4: # EnginePower
+        binString = ssm_3 + encodeBnr(value,enginePower) + encodeAvionicsStatus(status) + "00" + encodeLabel(4)
+
     
     if ((binString.count("1") % 2) == 0):
         binString = "1" + binString

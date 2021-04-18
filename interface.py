@@ -1,4 +1,4 @@
-import Tkinter as tk
+import tkinter as tk
 import time
 import os
 import errno
@@ -24,7 +24,7 @@ class Interface:
     def initOutputs(self):
         # Fields
         self.altitude_rt = tk.Label(root, font=('calibre', 10, 'bold'))
-        self.angleOfAttack_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
+        self.enginePower_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
         self.verticalSpeed_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
         self.error_label = tk.Label(root, textvariable = self.error_field, font = ('calibre', 10, 'bold'), fg = "red")
         self.avionicsUnit_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
@@ -32,6 +32,7 @@ class Interface:
         # Inputs
         self.altitude = 0
         self.angleOfAttack = 0
+        self.enginePower = 0
         self.verticalSpeed = 0
         self.avionicsUnit = "AU_SOL"
         
@@ -56,7 +57,7 @@ class Interface:
     def initStaticElements(self):
         self.metric_label = tk.Label(root, text = 'Metric', font=('calibre', 10, 'bold'))
         self.wantedValue_label = tk.Label(root, text = 'Wanted Value', font = ('calibre', 10, 'bold'))
-        self.actualValue_label = tk.Label(root, text = 'Actual Value', font = ('calibre', 10, 'bold'))
+        self.actualValue_label = tk.Label(root, text = 'Actual Values', font = ('calibre', 10, 'bold'))
         self.sub_btn=tk.Button(root, text = 'Submit', command = self.submit)
 
     # Position Elements on GUI
@@ -71,7 +72,7 @@ class Interface:
 
         self.angleOfAttack_label.grid(row = 2, column = 0)
         self.angleOfAttack_entry.grid(row = 2, column = 1)
-        self.angleOfAttack_rt.grid(row = 2, column = 2)
+        self.enginePower_rt.grid(row = 2, column = 2)
 
         self.verticalSpeed_label.grid(row = 3, column = 0)
         self.verticalSpeed_entry.grid(row = 3, column = 1)
@@ -115,7 +116,7 @@ class Interface:
         self.readCalculatorData()
         self.altitude_rt.configure(text = '{} ft'.format(self.altitude))
         self.avionicsUnit_rt.configure(text = '{}'.format(self.avionicsUnit))
-        self.angleOfAttack_rt.configure(text = '{} %'.format(self.angleOfAttack))
+        self.enginePower_rt.configure(text = '{} %'.format(self.enginePower))
         self.verticalSpeed_rt.configure(text = '{} m/min'.format(self.verticalSpeed))
         self.altitude_rt.after(100, self.update)
 

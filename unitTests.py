@@ -18,10 +18,16 @@ for i in range(-800, 800):
 
 print("Vertical Speed count {}".format(count))
 
-
 for i in range(-16, 16):
     if decodeA429(encodeA429("agr",3,"CHANGEMENT_ALT", i),"agr")["angleOfAttack"] != i:
         count += 1
         print("Error not Equal {}".format(i))
 
 print("Angle Of Attack count {}".format(count))
+
+for i in range(0, 100):
+    if decodeA429(encodeA429("agr",4,"CHANGEMENT_ALT", i),"agr")["enginePower"] != i:
+        count += 1
+        print("Error not Equal {}".format(i))
+
+print("Engine Power count {}".format(count))
