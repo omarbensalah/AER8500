@@ -9,6 +9,7 @@ import signal
 import psutil
 import random
 from dataConversion import encodeA429, decodeA429, encodeAfdx, decodeAfdx, getA429WordFromAfdx
+from calcul import findAngleOfAttack
   
 class Interface:
     def __init__(self, master):
@@ -23,7 +24,7 @@ class Interface:
     def initOutputs(self):
         # Fields
         self.altitude_rt = tk.Label(root, font=('calibre', 10, 'bold'))
-        self.angleOfAttack_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
+        self.enginePower_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
         self.verticalSpeed_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
         self.error_label = tk.Label(root, textvariable = self.error_field, font = ('calibre', 10, 'bold'), fg = "red")
         self.avionicsUnit_rt = tk.Label(root, font = ('calibre', 10, 'bold'))
@@ -31,13 +32,14 @@ class Interface:
         # Inputs
         self.altitude = 0
         self.angleOfAttack = 0
+        self.enginePower = 0
         self.verticalSpeed = 0
         self.avionicsUnit = "AU_SOL"
         
     # Init Input Fields
     def initInputFields(self):
         self.altitude_field = tk.StringVar()
-        self.angleOfAttack_field = tk.StringVar()
+        self.enginePower_field = tk.StringVar()
         self.verticalSpeed_field = tk.StringVar()
         self.avionicsUnit_field = tk.StringVar()
         self.error_field = tk.StringVar()
@@ -45,8 +47,8 @@ class Interface:
         self.altitude_label = tk.Label(root, text = 'Altitude', font=('calibre', 10, 'bold'))
         self.altitude_entry = tk.Entry(root, textvariable = self.altitude_field, font=('calibre', 10, 'normal'))
 
-        self.angleOfAttack_label = tk.Label(root, text = 'Angle Of Attack', font = ('calibre', 10, 'bold'))
-        self.angleOfAttack_entry = tk.Entry(root, textvariable = self.angleOfAttack_field, font = ('calibre', 10, 'normal'))
+        self.enginePower_label = tk.Label(root, text = 'Engine Power', font = ('calibre', 10, 'bold'))
+        self.enginePower_entry = tk.Entry(root, textvariable = self.enginePower_field, font = ('calibre', 10, 'normal'))
 
         self.verticalSpeed_label = tk.Label(root, text = 'Vertical Speed', font = ('calibre', 10, 'bold'))
         self.verticalSpeed_entry = tk.Entry(root, textvariable = self.verticalSpeed_field, font = ('calibre', 10, 'normal'))
@@ -68,9 +70,9 @@ class Interface:
         self.altitude_entry.grid(row = 1, column = 1)
         self.altitude_rt.grid(row = 1, column = 2)
 
-        self.angleOfAttack_label.grid(row = 2, column = 0)
-        self.angleOfAttack_entry.grid(row = 2, column = 1)
-        self.angleOfAttack_rt.grid(row = 2, column = 2)
+        self.enginePower_label.grid(row = 2, column = 0)
+        self.enginePower_entry.grid(row = 2, column = 1)
+        self.enginePower_rt.grid(row = 2, column = 2)
 
         self.verticalSpeed_label.grid(row = 3, column = 0)
         self.verticalSpeed_entry.grid(row = 3, column = 1)
@@ -100,13 +102,13 @@ class Interface:
                     temp = decodeA429(dataTab[0], "cal")
                     self.altitude = temp["altitude"]
                     self.verticalSpeed =  decodeA429(dataTab[1], "cal")["verticalSpeed"]
-                    self.angleOfAttack = decodeA429(dataTab[2], "cal")["angleOfAttack"]
+                    # self.angleOfAttack = decodeA429(dataTab[2], "cal")["angleOfAttack"]
                     self.avionicsUnit = temp["avionicsUnit"]
                 else:
                     temp = decodeAfdx(dataTab[0], "cal")
                     self.altitude = temp["altitude"]
                     self.verticalSpeed =  decodeAfdx(dataTab[1], "cal")["verticalSpeed"]
-                    self.angleOfAttack = decodeAfdx(dataTab[2], "cal")["angleOfAttack"]
+                    # self.angleOfAttack = decodeAfdx(dataTab[2], "cal")["angleOfAttack"]
                     self.avionicsUnit = temp["avionicsUnit"]
 
     # Updates the Gui
@@ -114,39 +116,39 @@ class Interface:
         self.readCalculatorData()
         self.altitude_rt.configure(text = '{} ft'.format(self.altitude))
         self.avionicsUnit_rt.configure(text = '{}'.format(self.avionicsUnit))
-        self.angleOfAttack_rt.configure(text = '{} deg'.format(self.angleOfAttack))
+        self.enginePower_rt.configure(text = '{} %'.format(self.enginePower))
         self.verticalSpeed_rt.configure(text = '{} m/min'.format(self.verticalSpeed))
         self.altitude_rt.after(100, self.update)
 
     # Submit values to Calculator
     def submit(self):
         altitude = self.altitude_field.get()
-        angleOfAttack = self.angleOfAttack_field.get()
+        enginePower = self.enginePower_field.get()
         verticalSpeed = self.verticalSpeed_field.get()
 
         altitudeEmpty = True if len(altitude) == 0 else False
-        angleOfAttackEmpty = True if len(angleOfAttack) == 0 else False
+        enginePowerEmpty = True if len(enginePower) == 0 else False
         verticalSpeedEmpty = True if len(verticalSpeed)  == 0 else False
 
-        if (not altitudeEmpty and (not angleOfAttackEmpty or not angleOfAttackEmpty)):
-            self.error_field.set("You should provide Altitude \n or Angle Of Attack and Vertical Speed")
+        if (not altitudeEmpty and (not enginePowerEmpty or not enginePowerEmpty)):
+            self.error_field.set("You should provide Altitude \n or Engine Power and Vertical Speed")
             return
-        elif ((not angleOfAttackEmpty and verticalSpeedEmpty) or (verticalSpeedEmpty and not verticalSpeedEmpty)):
-            self.error_field.set("You should provide Altitude \n or Angle Of Attack and Vertical Speed")
+        elif ((not enginePowerEmpty and verticalSpeedEmpty) or (verticalSpeedEmpty and not verticalSpeedEmpty)):
+            self.error_field.set("You should provide Altitude \n or Engine Power and Vertical Speed")
             return
-        elif (altitudeEmpty and angleOfAttackEmpty and verticalSpeedEmpty):
-            self.error_field.set("You should provide Altitude \n or Angle Of Attack and Vertical Speed")
+        elif (altitudeEmpty and enginePowerEmpty and verticalSpeedEmpty):
+            self.error_field.set("You should provide Altitude \n or Engine Power and Vertical Speed")
             return
 
         altitude_num = int(altitude) if altitude != "" else 0
-        angleOfAttack_num = int(angleOfAttack) if angleOfAttack != "" else 0
+        enginePower_num = int(enginePower) if enginePower != "" else 0
         verticalSpeed_num = int(verticalSpeed) if verticalSpeed != "" else 0
         
         if (altitude_num > 40000 or altitude_num < 0):
             self.error_field.set("Altitude has to be \n between 0 and 40000")
             return
-        elif (angleOfAttack_num > 16 or angleOfAttack_num < -16):
-            self.error_field.set("Angle Of Attack has to be \n between 0 and 100")
+        elif (enginePower_num > 100 or enginePower_num < 0):
+            self.error_field.set("Engine Power has to be \n between 0 and 100")
             return
         elif (verticalSpeed_num > 800 or verticalSpeed_num < 0):
             self.error_field.set("Vertical Speed has to be \n between 0 and 800")
@@ -154,11 +156,15 @@ class Interface:
         else:
             self.error_field.set("")
             self.altitude_field.set("")
-            self.angleOfAttack_field.set("")
+            self.enginePower_field.set("")
             self.verticalSpeed_field.set("")
+        
+        self.enginePower = enginePower_num
 
-        A429 = "{},{},{}".format(encodeA429("agr", 1, "", altitude_num), encodeA429("agr", 2, "", angleOfAttack_num), encodeA429("agr", 3, "", verticalSpeed_num))
-        Afdx = "{},{},{}".format(encodeAfdx("agr", 1, "", altitude_num), encodeAfdx("agr", 2, "", angleOfAttack_num), encodeAfdx("agr", 3, "", verticalSpeed_num))
+        self.angleOfAttack = findAngleOfAttack(enginePower_num, verticalSpeed_num)
+
+        A429 = "{},{},{}".format(encodeA429("agr", 1, "", altitude_num), encodeA429("agr", 3, "", self.angleOfAttack), encodeA429("agr", 2, "", verticalSpeed_num))
+        Afdx = "{},{},{}".format(encodeAfdx("agr", 1, "", altitude_num), encodeAfdx("agr", 3, "", self.angleOfAttack), encodeAfdx("agr", 2, "", verticalSpeed_num))
 
         os.kill(childPid, signal.SIGUSR1)
 
