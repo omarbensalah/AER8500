@@ -15,7 +15,7 @@ verticalSpeed = {
   "resolution": 0.0625
 }
 
-enginePower = {
+angleOfAttack = {
   "NBS": 9,
   "unite": "degres",
   "range": 32,
@@ -142,11 +142,11 @@ def decodeA429(word, source):
             else:
                 return {}
 
-        elif label == 3: # Puissance Moteur BCD
+        elif label == 3: # Angle d'ataque BCD
             if ssm == "00":
-                return {"enginePower": decodeBcd(binString, label)}
+                return {"angleOfAttack": decodeBcd(binString, label)}
             elif ssm == "11":
-                return {"enginePower": -decodeBcd(binString, label)}
+                return {"angleOfAttack": -decodeBcd(binString, label)}
             else:
                 return {}
     
@@ -166,7 +166,7 @@ def encodeA429(source, label, status, value):
         elif value < 0:
             binString = ssm_3 + encodeBcd(abs(value),label) + encodeLabel(label)
 
-    elif label == 3: #  Puissance Moteur
+    elif label == 3: # Angle d'attaque
         if value >= 0:
             binString = ssm_0 + encodeBcd(abs(value),label) + encodeLabel(int(label))
         elif value < 0:
