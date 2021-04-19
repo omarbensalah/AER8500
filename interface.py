@@ -118,7 +118,7 @@ class Interface:
         self.readCalculatorData()
         self.altitude_rt.configure(text = 'Altitude: {} ft'.format(self.altitude))
         self.avionicsUnit_rt.configure(text = '{}'.format(self.avionicsUnit))
-        self.enginePower_rt.configure(text = 'Engine Power: {} %'.format(int(self.enginePower)))
+        self.enginePower_rt.configure(text = 'Engine Power: {} m/min'.format(int(self.enginePower)))
         self.verticalSpeed_rt.configure(text = 'Vertical Speed: {} m/min'.format(self.verticalSpeed))
         self.altitude_rt.after(100, self.update)
 

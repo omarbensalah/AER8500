@@ -11,7 +11,7 @@ altitude = {
 enginePower = {
   "NBS": 16,
   "unite": "%",
-  "range": 128,
+  "range": 65536,
   "resolution": 1
 }
 

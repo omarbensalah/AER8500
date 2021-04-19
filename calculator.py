@@ -56,40 +56,43 @@ while True:
         if (APmode == "AOA"):
             if (requestedAngleOfAttack - angleOfAttack > 1):
                 angleOfAttack += 0.1
-                
             elif (requestedAngleOfAttack - angleOfAttack < 1):
                 angleOfAttack -= 0.1
                 
-            avionicsUnit = "CHANGEMENT_ALT"
             verticalSpeed += (requestedVerticalSpeed - verticalSpeed) * 0.167 
-
-            enginePower = requestedVerticalSpeed / (math.sin(math.radians(requestedAngleOfAttack)) * 10)
+            
+            enginePower = verticalSpeed / math.sin(math.radians(angleOfAttack + 5))
+            avionicsUnit = "CHANGEMENT_ALT"
 
         elif (APmode == "ALT"):
             if(requestedAltitude - altitude > 100):
-                if(enginePower > 80):
-                    enginePower -= 2
-                else:
-                    enginePower += 2
-                if(verticalSpeed > 600):
+                if (angleOfAttack > 8):
+                    angleOfAttack -= 0.5
+                elif (angleOfAttack < 8):
+                    angleOfAttack += 0.5
+
+                if(verticalSpeed > 500):
                     verticalSpeed -= 100
-                elif(verticalSpeed<600):
+                elif(verticalSpeed<500):
                     verticalSpeed += 100
                 
             elif(requestedAltitude - altitude < 100):
-                if(enginePower > 80):
-                    enginePower -= 2
-                else:
-                    enginePower += 2
-                if(verticalSpeed > 600):
+                if (angleOfAttack > 8):
+                    angleOfAttack -= 0.5
+                elif (angleOfAttack < 8):
+                    angleOfAttack += 0.5
+
+                if(verticalSpeed > 500):
                     verticalSpeed -= 100
-                elif(verticalSpeed<600):
+                elif(verticalSpeed<500):
                     verticalSpeed += 100
-                
+
+            enginePower = verticalSpeed / math.sin(math.radians(angleOfAttack + 5))
+
             avionicsUnit = "CHANGEMENT_ALT"
             
-
         altitude += verticalSpeed / 60 * 0.1
+        print(enginePower)
 
         A429 = "{},{},{},{}".format(encodeA429("cal", 1, avionicsUnit, altitude), encodeA429("cal", 2, "", verticalSpeed), encodeA429("cal", 3, "", angleOfAttack), encodeA429("cal", 4, "", enginePower))
         Afdx = "{},{},{},{}".format(encodeAfdx("cal", 1, avionicsUnit, altitude), encodeAfdx("cal", 2, "", verticalSpeed), encodeAfdx("cal", 3, "", angleOfAttack), encodeAfdx("cal", 4, "", enginePower))
@@ -99,4 +102,4 @@ while True:
         else:
             f.write(Afdx + "," + A429)
         
-    time.sleep(1)
+    time.sleep(0.1)
